@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Financial Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s;
+}
+.sidebar-header {
+    padding: 24px 20px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-header i { color: #4facfe; font-size: 1.4rem; }
+.nav-links {
+    list-style: none;
+    padding: 12px 0;
+    flex: 1;
+}
+.nav-links li {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    font-size: 0.93rem;
+    color: rgba(255,255,255,0.7);
+}
+.nav-links li:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+.nav-links li.active {
+    background: rgba(79,172,254,0.15);
+    border-left-color: #4facfe;
+    color: #fff;
+    font-weight: 500;
+}
+.nav-links li i { width: 20px; text-align: center; }
+
+/* ===== MAIN CONTENT ===== */
+#main-content {
+    margin-left: 240px;
+    flex: 1;
+    padding: 28px 32px;
+    min-height: 100vh;
+}
+
+/* ===== SECTIONS ===== */
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.section-header h1 { font-size: 1.7rem; font-weight: 700; }
+.last-updated { font-size: 0.85rem; color: #888; }
+.section-subtitle { color: #666; margin-top: 4px; }
+.delivery-date {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ===== KPI CARDS ===== */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.kpi-card.accent { border-left: 4px solid #4facfe; }
+.kpi-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.kpi-info { display: flex; flex-direction: column; }
+.kpi-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 1.35rem; font-weight: 700; margin: 2px 0; }
+.kpi-change { font-size: 0.8rem; font-weight: 500; }
+.kpi-change.positive { color: #2e7d32; }
+.kpi-change.negative { color: #c62828; }
+
+/* ===== CHART CARDS ===== */
+.chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.chart-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.chart-card.wide { grid-column: span 1; }
+.chart-row:has(.wide):not(:has(.wide + .chart-card:not(.wide))) .chart-card.wide {
+    grid-column: span 2;
+}
+.chart-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+}
+.chart-card canvas { max-height: 300px; }
+
+/* ===== PANELS ===== */
+.panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.panel h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #333;
+}
+
+/* ===== TIPS PANEL ===== */
+.tips-panel {
+    background: linear-gradient(135deg, #667eea22, #764ba222);
+    border: 1px solid #667eea44;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.tips-panel h3 { color: #4a3f8a; margin-bottom: 14px; }
+.tips-panel h3 i { margin-right: 8px; color: #f0a500; }
+.tip-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(102,126,234,0.15);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.tip-item:last-child { border-bottom: none; }
+.tip-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.tip-text { font-size: 0.9rem; line-height: 1.5; }
+.tip-text strong { color: #333; }
+.muted { color: #999; font-style: italic; }
+
+/* ===== ASSET CARDS ===== */
+.asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.asset-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+.asset-card:hover { transform: translateY(-3px); }
+.asset-card-header {
+    padding: 20px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.asset-card-header i { font-size: 1.5rem; margin-bottom: 4px; }
+.asset-card-header h3 { font-size: 1.1rem; font-weight: 600; }
+.asset-tag {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 10px;
+    align-self: flex-start;
+    margin-top: 4px;
+}
+.asset-card-body { padding: 16px 20px; }
+.asset-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.88rem;
+}
+.asset-stat span { color: #777; }
+.asset-stat strong { color: #1a1a2e; }
+
+/* ===== BANK ACCOUNTS ===== */
+.bank-accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.bank-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border-left: 4px solid #4facfe;
+}
+.bank-card h4 { font-size: 1rem; margin-bottom: 8px; }
+.bank-card .balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1565c0;
+}
+.bank-card .currency { font-size: 0.85rem; color: #888; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar-container { margin: 12px 0; }
+.progress-bar-container.large { margin: 16px 0; }
+.progress-label { font-size: 0.8rem; color: #888; margin-bottom: 6px; }
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.progress-bar-container.large .progress-bar { height: 20px; border-radius: 10px; }
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+.progress-pct { font-size: 0.85rem; font-weight: 600; color: #555; margin-top: 4px; display: inline-block; }
+
+/* ===== TIMELINE BAR ===== */
+.timeline-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    position: relative;
+    height: 40px;
+    background: #e9ecef;
+    border-radius: 20px;
+    padding: 0 16px;
+}
+.timeline-marker { font-size: 0.75rem; color: #888; z-index: 1; }
+.timeline-current {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe88, #00f2fe88);
+    border-radius: 20px;
+    left: 0;
+    top: 0;
+    transition: width 0.5s;
+}
+
+/* ===== TABLES ===== */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 2px solid #eee;
+}
+.data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.88rem;
+}
+.data-table tr:hover td { background: #f8f9ff; }
+
+/* ===== BUTTONS ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: #e3f2fd;
+    color: #1565c0;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin-top: 8px;
+}
+.btn:hover { background: #bbdefb; }
+.btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+.btn-primary { background: #1565c0; color: #fff; }
+.btn-primary:hover { background: #0d47a1; }
+.btn-lg { padding: 12px 28px; font-size: 1rem; }
+.btn-secondary { background: #f3e5f5; color: #6a1b9a; }
+.btn-secondary:hover { background: #e1bee7; }
+.btn-danger { background: #fce4ec; color: #c62828; }
+.btn-danger:hover { background: #ef9a9a; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.forecast-controls { display: flex; gap: 8px; margin-bottom: 12px; }
+.forecast-controls .btn.active { background: #1565c0; color: #fff; }
+
+/* ===== FORMS ===== */
+.form-group {
+    margin-bottom: 14px;
+}
+.form-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 4px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 0 0 0 3px rgba(79,172,254,0.15);
+}
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+/* ===== ITEM LIST ===== */
+.item-list { margin-bottom: 8px; }
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.88rem;
+}
+.item-row:last-child { border-bottom: none; }
+.item-row .item-name { font-weight: 500; }
+.item-row .item-amount { font-weight: 600; }
+.item-row .item-actions { display: flex; gap: 6px; }
+.item-row .item-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 0.85rem;
+    padding: 4px;
+}
+.item-row .item-actions button:hover { color: #c62828; }
+
+/* ===== UPLOAD AREA ===== */
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #999;
+}
+.upload-area:hover, .upload-area.drag-over {
+    border-color: #4facfe;
+    background: rgba(79,172,254,0.05);
+    color: #4facfe;
+}
+.upload-area i { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+.upload-preview { margin-top: 16px; }
+.upload-preview.hidden { display: none; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } }
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+.modal-header h3 { font-size: 1.05rem; }
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+}
+.modal-body { padding: 20px; }
+.modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* ===== UPDATE WIZARD ===== */
+.update-wizard {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-top: 4px solid #4facfe;
+}
+.update-wizard > h3 { color: #1565c0; margin-bottom: 4px; }
+.update-wizard > p { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+.wizard-step {
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.wizard-step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #f8f9ff;
+}
+.step-number {
+    width: 28px; height: 28px;
+    background: #1565c0;
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.wizard-step-header h4 { font-size: 0.95rem; }
+.wizard-step-body { padding: 16px; }
+
+/* ===== BEHAVIOR ALERTS ===== */
+.alert-item {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.alert-item.warning { background: #fff3e0; border-left: 3px solid #f57c00; }
+.alert-item.success { background: #e8f5e9; border-left: 3px solid #2e7d32; }
+.alert-item.info { background: #e3f2fd; border-left: 3px solid #1565c0; }
+.alert-item i { margin-top: 2px; }
+.alert-item p { font-size: 0.88rem; line-height: 1.5; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    #sidebar { width: 60px; }
+    #sidebar .sidebar-header span, #sidebar .nav-links span { display: none; }
+    .sidebar-header { justify-content: center; padding: 20px 8px; }
+    .nav-links li { justify-content: center; padding: 14px 8px; }
+    #main-content { margin-left: 60px; padding: 20px 16px; }
+    .chart-row { grid-template-columns: 1fr; }
+    .chart-card.wide { grid-column: span 1; }
+    .kpi-row { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .asset-grid { grid-template-columns: 1fr; }
+}
+
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-chart-line"></i>
+            <span>FinDash</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-section="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></li>
+            <li data-section="cashflow"><i class="fas fa-exchange-alt"></i><span>Cash Flow</span></li>
+            <li data-section="assets"><i class="fas fa-building"></i><span>Assets</span></li>
+            <li data-section="networth"><i class="fas fa-coins"></i><span>Net Worth</span></li>
+            <li data-section="cash"><i class="fas fa-university"></i><span>Cash Positions</span></li>
+            <li data-section="behavior"><i class="fas fa-brain"></i><span>Behavior</span></li>
+            <li data-section="aegina"><i class="fas fa-hammer"></i><span>Aegina Project</span></li>
+            <li data-section="update"><i class="fas fa-upload"></i><span>Update Data</span></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+        <!-- DASHBOARD SECTION -->
+        <section id="section-dashboard" class="section active">
+            <div class="section-header">
+                <h1>Financial Overview</h1>
+                <span class="last-updated" id="last-updated-label">Last updated: Never</span>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Net Worth</span>
+                        <span class="kpi-value" id="kpi-networth">--</span>
+                        <span class="kpi-change positive" id="kpi-networth-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-piggy-bank"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Cash</span>
+                        <span class="kpi-value" id="kpi-cash">--</span>
+                        <span class="kpi-change" id="kpi-cash-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-building"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Assets</span>
+                        <span class="kpi-value" id="kpi-assets">--</span>
+                        <span class="kpi-change" id="kpi-assets-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-credit-card"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Spend</span>
+                        <span class="kpi-value" id="kpi-spend">--</span>
+                        <span class="kpi-change" id="kpi-spend-change"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Net Worth Over Time</h3>
+                    <canvas id="chart-networth-timeline"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Asset Allocation</h3>
+                    <canvas id="chart-asset-allocation"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Monthly Income vs Expenses</h3>
+                    <canvas id="chart-income-expenses"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Cash Position Trend</h3>
+                    <canvas id="chart-cash-trend"></canvas>
+                </div>
+            </div>
+
+            <!-- Coaching Tips -->
+            <div class="tips-panel" id="dashboard-tips">
+                <h3><i class="fas fa-lightbulb"></i> Financial Coach</h3>
+                <div id="coaching-tips-list">
+                    <p class="muted">Update your data to receive personalized coaching tips.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASH FLOW SECTION -->
+        <section id="section-cashflow" class="section">
+            <div class="section-header">
+                <h1>Cash Flow Analysis</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-arrow-down"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Income</span>
+                        <span class="kpi-value" id="cf-income">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-arrow-up"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Expenses</span>
+                        <span class="kpi-value" id="cf-expenses">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-balance-scale"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Net Cash Flow</span>
+                        <span class="kpi-value" id="cf-net">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#f3e5f5;color:#6a1b9a;"><i class="fas fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Savings Rate</span>
+                        <span class="kpi-value" id="cf-savings-rate">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recurring Items -->
+            <div class="panel">
+                <h3>Recurring Income</h3>
+                <div id="recurring-income-list" class="item-list"></div>
+                <button class="btn btn-sm" onclick="app.openRecurringModal('income')"><i class="fas fa-plus"></i> Add Income</button>
+            </div>
+            <div class="panel">
+                <h3>Recurring Expenses</h3>
+                <div id="recurring-expense-list" class="item-list"></div>
+                <button class="btn btn-sm" onclick="app.openRecurringModal('expense')"><i class="fas fa-plus"></i> Add Expense</button>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Cash Flow Forecast</h3>
+                    <div class="forecast-controls">
+                        <button class="btn btn-sm active" data-months="3" onclick="app.setCashFlowForecast(3, this)">3 Months</button>
+                        <button class="btn btn-sm" data-months="6" onclick="app.setCashFlowForecast(6, this)">6 Months</button>
+                        <button class="btn btn-sm" data-months="12" onclick="app.setCashFlowForecast(12, this)">12 Months</button>
+                        <button class="btn btn-sm" data-months="24" onclick="app.setCashFlowForecast(24, this)">24 Months</button>
+                    </div>
+                    <canvas id="chart-cashflow-forecast"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Expense Breakdown</h3>
+                    <canvas id="chart-expense-breakdown"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Income Sources</h3>
+                    <canvas id="chart-income-sources"></canvas>
+                </div>
+            </div>
+
+            <div class="tips-panel" id="cashflow-tips">
+                <h3><i class="fas fa-lightbulb"></i> Cash Flow Tips</h3>
+                <div id="cashflow-tips-list">
+                    <p class="muted">Add your income and expense data to get tips.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ASSETS SECTION -->
+        <section id="section-assets" class="section">
+            <div class="section-header">
+                <h1>Asset Monitor</h1>
+            </div>
+
+            <div class="asset-grid" id="asset-cards-container">
+                <!-- Paris Flat -->
+                <div class="asset-card" data-asset="paris">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-city"></i>
+                        <h3>Paris Flat</h3>
+                        <span class="asset-tag">Rental Income + Mortgage</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Current Value</span>
+                            <strong id="paris-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Mortgage Outstanding</span>
+                            <strong id="paris-mortgage">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Equity</span>
+                            <strong id="paris-equity">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Monthly Rent</span>
+                            <strong id="paris-rent">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Monthly Mortgage Payment</span>
+                            <strong id="paris-mortgage-payment">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Net Monthly Income</span>
+                            <strong id="paris-net-income">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('paris')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- Manarat Flat -->
+                <div class="asset-card" data-asset="manarat">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-building"></i>
+                        <h3>Manarat Flat</h3>
+                        <span class="asset-tag">Off-Plan &bull; Delivery Sep 2026</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Purchase Price</span>
+                            <strong id="manarat-price">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Value Estimate</span>
+                            <strong id="manarat-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Amount Paid</span>
+                            <strong id="manarat-paid">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Amount Remaining</span>
+                            <strong id="manarat-remaining">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Delivery Date</span>
+                            <strong>September 2026</strong>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-label">Payment Progress</div>
+                            <div class="progress-bar"><div class="progress-fill" id="manarat-progress"></div></div>
+                            <span class="progress-pct" id="manarat-progress-pct">0%</span>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('manarat')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- Aegina House -->
+                <div class="asset-card" data-asset="aegina">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <i class="fas fa-home"></i>
+                        <h3>Aegina House</h3>
+                        <span class="asset-tag">Refurbishment &bull; Delivery Apr 2027</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Property Value</span>
+                            <strong id="aegina-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Budget</span>
+                            <strong id="aegina-budget">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Spent</span>
+                            <strong id="aegina-spent">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Remaining</span>
+                            <strong id="aegina-remaining">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('aegina')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- SPY Shares -->
+                <div class="asset-card" data-asset="spy">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>SPY Shares (HSBC)</h3>
+                        <span class="asset-tag">Investment</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Shares Held</span>
+                            <strong id="spy-shares">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Avg Cost Basis</span>
+                            <strong id="spy-cost">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Price</span>
+                            <strong id="spy-price">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Value</span>
+                            <strong id="spy-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Total Gain/Loss</span>
+                            <strong id="spy-gain">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('spy')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NET WORTH SECTION -->
+        <section id="section-networth" class="section">
+            <div class="section-header">
+                <h1>Net Worth Tracker</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card accent">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-gem"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Net Worth</span>
+                        <span class="kpi-value" id="nw-total">--</span>
+                        <span class="kpi-change" id="nw-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-plus-circle"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Assets</span>
+                        <span class="kpi-value" id="nw-assets">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-minus-circle"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Liabilities</span>
+                        <span class="kpi-value" id="nw-liabilities">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Net Worth History</h3>
+                    <canvas id="chart-networth-history"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Assets vs Liabilities</h3>
+                    <canvas id="chart-assets-liabilities"></canvas>
+                </div>
+            </div>
+
+            <!-- Net Worth Breakdown Table -->
+            <div class="panel">
+                <h3>Net Worth Breakdown</h3>
+                <table class="data-table" id="networth-table">
+                    <thead>
+                        <tr><th>Category</th><th>Item</th><th>Value</th><th>% of Net Worth</th></tr>
+                    </thead>
+                    <tbody id="networth-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CASH POSITIONS SECTION -->
+        <section id="section-cash" class="section">
+            <div class="section-header">
+                <h1>Cash Positions</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card accent">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Cash</span>
+                        <span class="kpi-value" id="cash-total">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bank-accounts-grid" id="bank-accounts-container"></div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Cash Distribution</h3>
+                    <canvas id="chart-cash-distribution"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Cash Balance History</h3>
+                    <canvas id="chart-cash-history"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Manage Bank Accounts</h3>
+                <button class="btn" onclick="app.openBankAccountModal()"><i class="fas fa-plus"></i> Add / Update Bank Account</button>
+            </div>
+        </section>
+
+        <!-- BEHAVIOR SECTION -->
+        <section id="section-behavior" class="section">
+            <div class="section-header">
+                <h1>Financial Behavior Analysis</h1>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Monthly Spending Trend</h3>
+                    <canvas id="chart-spending-trend"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Spending by Category</h3>
+                    <canvas id="chart-spending-category"></canvas>
+                </div>
+            </div>
+
+            <!-- Behavior Alerts -->
+            <div class="panel" id="behavior-alerts-panel">
+                <h3><i class="fas fa-bell"></i> Behavior Alerts</h3>
+                <div id="behavior-alerts">
+                    <p class="muted">Add monthly spending data to receive behavior alerts and coaching.</p>
+                </div>
+            </div>
+
+            <!-- Monthly Comparison -->
+            <div class="panel">
+                <h3>Month-over-Month Comparison</h3>
+                <div id="month-comparison">
+                    <p class="muted">Need at least 2 months of data for comparison.</p>
+                </div>
+            </div>
+
+            <!-- Add Monthly Spending -->
+            <div class="panel">
+                <h3>Record Monthly Spending</h3>
+                <button class="btn" onclick="app.openSpendingModal()"><i class="fas fa-plus"></i> Add Monthly Spending Entry</button>
+            </div>
+        </section>
+
+        <!-- AEGINA SECTION -->
+        <section id="section-aegina" class="section">
+            <div class="section-header">
+                <h1>Aegina Property Refurbishment</h1>
+                <span class="delivery-date">Target Delivery: April 2027</span>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-euro-sign"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Budget</span>
+                        <span class="kpi-value" id="aegina-total-budget">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-receipt"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Spent</span>
+                        <span class="kpi-value" id="aegina-total-spent">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-calculator"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Remaining</span>
+                        <span class="kpi-value" id="aegina-total-remaining">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#f3e5f5;color:#6a1b9a;"><i class="fas fa-percentage"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Budget Used</span>
+                        <span class="kpi-value" id="aegina-pct-used">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Progress -->
+            <div class="panel">
+                <h3>Overall Progress</h3>
+                <div class="progress-bar-container large">
+                    <div class="progress-bar"><div class="progress-fill" id="aegina-overall-progress" style="background: linear-gradient(90deg, #4facfe, #00f2fe);"></div></div>
+                    <span class="progress-pct" id="aegina-overall-pct">0%</span>
+                </div>
+                <div class="timeline-bar" id="aegina-timeline">
+                    <div class="timeline-marker start">Start</div>
+                    <div class="timeline-current" id="aegina-timeline-current"></div>
+                    <div class="timeline-marker end">Apr 2027</div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Budget vs Spent by Category</h3>
+                    <canvas id="chart-aegina-categories"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Spending Over Time</h3>
+                    <canvas id="chart-aegina-timeline"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="panel">
+                <h3>Category Breakdown</h3>
+                <table class="data-table" id="aegina-category-table">
+                    <thead>
+                        <tr><th>Category</th><th>Budget</th><th>Spent</th><th>Remaining</th><th>Progress</th></tr>
+                    </thead>
+                    <tbody id="aegina-category-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Expense Log -->
+            <div class="panel">
+                <h3>Expense Log</h3>
+                <div id="aegina-expense-log" class="item-list"></div>
+                <button class="btn" onclick="app.openAeginaExpenseModal()"><i class="fas fa-plus"></i> Add Expense</button>
+                <button class="btn btn-secondary" onclick="app.openAeginaCategoryModal()"><i class="fas fa-layer-group"></i> Manage Categories</button>
+            </div>
+        </section>
+
+        <!-- UPDATE DATA SECTION -->
+        <section id="section-update" class="section">
+            <div class="section-header">
+                <h1>Update Your Data</h1>
+                <p class="section-subtitle">Keep your dashboard current by entering your latest financial data.</p>
+            </div>
+
+            <!-- Quick Update Wizard -->
+            <div class="update-wizard">
+                <h3><i class="fas fa-magic"></i> Quick Update Wizard</h3>
+                <p>Answer these questions to bring your dashboard up to date:</p>
+
+                <div class="wizard-step" id="wizard-step-1">
+                    <div class="wizard-step-header">
+                        <span class="step-number">1</span>
+                        <h4>Bank Account Balances</h4>
+                    </div>
+                    <div class="wizard-step-body" id="wizard-bank-inputs"></div>
+                </div>
+
+                <div class="wizard-step" id="wizard-step-2">
+                    <div class="wizard-step-header">
+                        <span class="step-number">2</span>
+                        <h4>SPY Investment</h4>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-group">
+                            <label>Number of SPY Shares</label>
+                            <input type="number" id="wizard-spy-shares" step="0.01" placeholder="e.g. 50">
+                        </div>
+                        <div class="form-group">
+                            <label>Current SPY Price ($)</label>
+                            <input type="number" id="wizard-spy-price" step="0.01" placeholder="e.g. 520.50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-step" id="wizard-step-3">
+                    <div class="wizard-step-header">
+                        <span class="step-number">3</span>
+                        <h4>This Month's Spending</h4>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Housing</label>
+                                <input type="number" id="wizard-spend-housing" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Food & Dining</label>
+                                <input type="number" id="wizard-spend-food" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Transport</label>
+                                <input type="number" id="wizard-spend-transport" step="0.01" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Utilities</label>
+                                <input type="number" id="wizard-spend-utilities" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Entertainment</label>
+                                <input type="number" id="wizard-spend-entertainment" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Other</label>
+                                <input type="number" id="wizard-spend-other" step="0.01" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg" onclick="app.submitWizard()"><i class="fas fa-save"></i> Save All Updates</button>
+            </div>
+
+            <!-- File Upload -->
+            <div class="panel">
+                <h3><i class="fas fa-file-upload"></i> Upload Bank Statement (CSV)</h3>
+                <p>Upload a CSV bank statement to auto-categorize transactions and update spending data.</p>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop a CSV file here, or click to browse</p>
+                    <input type="file" id="file-upload" accept=".csv" style="display:none">
+                </div>
+                <div id="upload-preview" class="upload-preview hidden"></div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="panel">
+                <h3><i class="fas fa-database"></i> Data Management</h3>
+                <div class="btn-group">
+                    <button class="btn" onclick="app.exportData()"><i class="fas fa-download"></i> Export All Data (JSON)</button>
+                    <button class="btn" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Import Data (JSON)</button>
+                    <input type="file" id="import-file" accept=".json" style="display:none" onchange="app.importData(event)">
+                    <button class="btn btn-danger" onclick="app.resetData()"><i class="fas fa-trash"></i> Reset All Data</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal</h3>
+                <button class="modal-close" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <script>
+// ===== FinDash - Personal Finance Dashboard =====
+// All data persisted in localStorage
+
+const APP = {
+    STORAGE_KEY: 'findash_data',
+    CURRENCY_DEFAULT: 'EUR',
+    charts: {},
+};
+
+// ===== DATA MODEL =====
+function defaultData() {
+    return {
+        lastUpdated: null,
+        currency: 'EUR',
+
+        // Bank accounts
+        bankAccounts: [
+            { id: 'bank1', name: 'Bank Account 1', balance: 0, currency: 'EUR', history: [] },
+            { id: 'bank2', name: 'Bank Account 2', balance: 0, currency: 'EUR', history: [] },
+            { id: 'bank3', name: 'Bank Account 3', balance: 0, currency: 'EUR', history: [] },
+        ],
+
+        // Assets
+        assets: {
+            paris: {
+                value: 0,
+                mortgage: 0,
+                monthlyRent: 0,
+                mortgagePayment: 0,
+                mortgageRate: 0,
+                history: [],
+            },
+            manarat: {
+                purchasePrice: 0,
+                currentValue: 0,
+                amountPaid: 0,
+                deliveryDate: '2026-09',
+                currency: 'AED',
+                history: [],
+            },
+            aegina: {
+                propertyValue: 0,
+                refurbBudget: 0,
+                refurbSpent: 0,
+                deliveryDate: '2027-04',
+                categories: [
+                    { name: 'Construction', budget: 0, spent: 0 },
+                    { name: 'Electrical', budget: 0, spent: 0 },
+                    { name: 'Plumbing', budget: 0, spent: 0 },
+                    { name: 'Interior Design', budget: 0, spent: 0 },
+                    { name: 'Landscaping', budget: 0, spent: 0 },
+                    { name: 'Permits & Fees', budget: 0, spent: 0 },
+                    { name: 'Other', budget: 0, spent: 0 },
+                ],
+                expenses: [],
+                history: [],
+            },
+            spy: {
+                shares: 0,
+                costBasis: 0,
+                currentPrice: 0,
+                history: [],
+            },
+        },
+
+        // Recurring income & expenses
+        recurringIncome: [],
+        recurringExpenses: [],
+
+        // Monthly spending records: { month: 'YYYY-MM', categories: { housing: X, food: X, ... }, total: X }
+        monthlySpending: [],
+
+        // Net worth snapshots: { date: 'YYYY-MM-DD', netWorth: X, totalAssets: X, totalLiabilities: X }
+        networthHistory: [],
+
+        // Cash history snapshots
+        cashHistory: [],
+    };
+}
+
+// ===== STORAGE =====
+function loadData() {
+    try {
+        const raw = localStorage.getItem(APP.STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            // Merge with defaults to handle new fields
+            const base = defaultData();
+            return deepMerge(base, parsed);
+        }
+    } catch (e) {
+        console.error('Error loading data', e);
+    }
+    return defaultData();
+}
+
+function saveData(data) {
+    data.lastUpdated = new Date().toISOString();
+    localStorage.setItem(APP.STORAGE_KEY, JSON.stringify(data));
+}
+
+function deepMerge(target, source) {
+    const result = { ...target };
+    for (const key of Object.keys(source)) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]) && target[key]) {
+            result[key] = deepMerge(target[key], source[key]);
+        } else {
+            result[key] = source[key];
+        }
+    }
+    return result;
+}
+
+// ===== FORMAT HELPERS =====
+function fmt(amount, currency) {
+    currency = currency || 'EUR';
+    const sym = { EUR: '\u20AC', USD: '$', GBP: '\u00A3', AED: 'AED ' };
+    const prefix = sym[currency] || currency + ' ';
+    if (amount === null || amount === undefined || isNaN(amount)) return '--';
+    const sign = amount < 0 ? '-' : '';
+    return sign + prefix + Math.abs(amount).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtPct(val) {
+    if (val === null || val === undefined || isNaN(val)) return '--';
+    return val.toFixed(1) + '%';
+}
+
+function fmtDate(dateStr) {
+    if (!dateStr) return '--';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function monthLabel(dateStr) {
+    const d = new Date(dateStr + '-01');
+    return d.toLocaleDateString('en', { month: 'short', year: '2-digit' });
+}
+
+function currentMonth() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function addMonths(monthStr, n) {
+    const [y, m] = monthStr.split('-').map(Number);
+    const d = new Date(y, m - 1 + n, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+// ===== CHART COLORS =====
+const COLORS = [
+    '#4facfe', '#667eea', '#764ba2', '#f093fb', '#f5576c',
+    '#43e97b', '#38f9d7', '#fa709a', '#fee140', '#30cfd0',
+    '#a18cd1', '#fbc2eb', '#ff9a9e', '#fad0c4', '#ffecd2',
+];
+
+function getColor(i) { return COLORS[i % COLORS.length]; }
+
+// ===== MAIN APP OBJECT =====
+const app = {
+    data: null,
+
+    init() {
+        this.data = loadData();
+        this.setupNavigation();
+        this.setupUpload();
+        this.renderAll();
+    },
+
+    save() {
+        saveData(this.data);
+        document.getElementById('last-updated-label').textContent = 'Last updated: ' + fmtDate(this.data.lastUpdated);
+    },
+
+    // ===== NAVIGATION =====
+    setupNavigation() {
+        document.querySelectorAll('.nav-links li').forEach(li => {
+            li.addEventListener('click', () => {
+                document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+                li.classList.add('active');
+                const section = li.dataset.section;
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById('section-' + section).classList.add('active');
+                this.renderAll();
+            });
+        });
+    },
+
+    // ===== RENDER ALL =====
+    renderAll() {
+        this.renderDashboard();
+        this.renderCashFlow();
+        this.renderAssets();
+        this.renderNetWorth();
+        this.renderCashPositions();
+        this.renderBehavior();
+        this.renderAegina();
+        this.renderUpdateWizard();
+        if (this.data.lastUpdated) {
+            document.getElementById('last-updated-label').textContent = 'Last updated: ' + fmtDate(this.data.lastUpdated);
+        }
+    },
+
+    // ===== DASHBOARD =====
+    renderDashboard() {
+        const d = this.data;
+        const nw = this.calculateNetWorth();
+        const totalCash = this.getTotalCash();
+        const totalAssets = nw.totalAssets;
+        const monthSpend = this.getLatestMonthlySpend();
+
+        document.getElementById('kpi-networth').textContent = fmt(nw.netWorth);
+        document.getElementById('kpi-cash').textContent = fmt(totalCash);
+        document.getElementById('kpi-assets').textContent = fmt(totalAssets);
+        document.getElementById('kpi-spend').textContent = fmt(monthSpend);
+
+        // Net worth change
+        if (d.networthHistory.length >= 2) {
+            const prev = d.networthHistory[d.networthHistory.length - 2].netWorth;
+            const curr = nw.netWorth;
+            const change = curr - prev;
+            const pct = prev !== 0 ? (change / Math.abs(prev)) * 100 : 0;
+            const el = document.getElementById('kpi-networth-change');
+            el.textContent = (change >= 0 ? '+' : '') + fmt(change) + ' (' + fmtPct(pct) + ')';
+            el.className = 'kpi-change ' + (change >= 0 ? 'positive' : 'negative');
+        }
+
+        // Net Worth Timeline Chart
+        this.renderChart('chart-networth-timeline', 'line', () => {
+            const hist = d.networthHistory;
+            if (hist.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            return {
+                labels: hist.map(h => fmtDate(h.date)),
+                datasets: [{
+                    label: 'Net Worth',
+                    data: hist.map(h => h.netWorth),
+                    borderColor: '#4facfe',
+                    backgroundColor: 'rgba(79,172,254,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                }]
+            };
+        });
+
+        // Asset Allocation Doughnut
+        this.renderChart('chart-asset-allocation', 'doughnut', () => {
+            const items = this.getAssetBreakdown();
+            return {
+                labels: items.map(i => i.name),
+                datasets: [{
+                    data: items.map(i => i.value),
+                    backgroundColor: items.map((_, i) => getColor(i)),
+                    borderWidth: 2,
+                }]
+            };
+        }, { plugins: { legend: { position: 'right' } } });
+
+        // Income vs Expenses Bar
+        this.renderChart('chart-income-expenses', 'bar', () => {
+            const months = d.monthlySpending.slice(-6);
+            const income = this.getMonthlyIncome();
+            return {
+                labels: months.map(m => monthLabel(m.month)),
+                datasets: [
+                    { label: 'Income', data: months.map(() => income), backgroundColor: '#43e97b88', borderColor: '#43e97b', borderWidth: 1 },
+                    { label: 'Expenses', data: months.map(m => m.total), backgroundColor: '#f5576c88', borderColor: '#f5576c', borderWidth: 1 },
+                ]
+            };
+        });
+
+        // Cash Trend Line
+        this.renderChart('chart-cash-trend', 'line', () => {
+            const hist = d.cashHistory.slice(-12);
+            if (hist.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            return {
+                labels: hist.map(h => fmtDate(h.date)),
+                datasets: [{
+                    label: 'Total Cash',
+                    data: hist.map(h => h.total),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102,126,234,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                }]
+            };
+        });
+
+        // Coaching Tips
+        this.renderCoachingTips();
+    },
+
+    // ===== CASH FLOW =====
+    renderCashFlow() {
+        const d = this.data;
+        const income = this.getMonthlyIncome();
+        const expenses = this.getMonthlyExpenses();
+        const net = income - expenses;
+        const savingsRate = income > 0 ? (net / income) * 100 : 0;
+
+        document.getElementById('cf-income').textContent = fmt(income);
+        document.getElementById('cf-expenses').textContent = fmt(expenses);
+        document.getElementById('cf-net').textContent = fmt(net);
+        document.getElementById('cf-savings-rate').textContent = fmtPct(savingsRate);
+
+        // Recurring lists
+        this.renderRecurringList('recurring-income-list', d.recurringIncome, 'income');
+        this.renderRecurringList('recurring-expense-list', d.recurringExpenses, 'expense');
+
+        // Cash Flow Forecast
+        this.renderCashFlowForecast(3);
+
+        // Expense Breakdown
+        this.renderChart('chart-expense-breakdown', 'doughnut', () => {
+            const latest = d.monthlySpending[d.monthlySpending.length - 1];
+            if (!latest) return { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#eee'] }] };
+            const cats = Object.entries(latest.categories).filter(([_, v]) => v > 0);
+            return {
+                labels: cats.map(([k]) => k.charAt(0).toUpperCase() + k.slice(1)),
+                datasets: [{
+                    data: cats.map(([_, v]) => v),
+                    backgroundColor: cats.map((_, i) => getColor(i)),
+                }]
+            };
+        }, { plugins: { legend: { position: 'right' } } });
+
+        // Income Sources
+        this.renderChart('chart-income-sources', 'doughnut', () => {
+            const items = d.recurringIncome;
+            if (items.length === 0) return { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#eee'] }] };
+            return {
+                labels: items.map(i => i.name),
+                datasets: [{
+                    data: items.map(i => i.amount),
+                    backgroundColor: items.map((_, i) => getColor(i)),
+                }]
+            };
+        }, { plugins: { legend: { position: 'right' } } });
+
+        // Cashflow tips
+        this.renderCashFlowTips();
+    },
+
+    renderCashFlowForecast(months) {
+        const d = this.data;
+        const income = this.getMonthlyIncome();
+        const expenses = this.getMonthlyExpenses();
+        const net = income - expenses;
+        const totalCash = this.getTotalCash();
+
+        const labels = [];
+        const cashProjection = [];
+        const incomeData = [];
+        const expenseData = [];
+        let runningCash = totalCash;
+
+        for (let i = 0; i <= months; i++) {
+            const m = addMonths(currentMonth(), i);
+            labels.push(monthLabel(m));
+            cashProjection.push(Math.round(runningCash));
+            incomeData.push(income);
+            expenseData.push(expenses);
+            runningCash += net;
+        }
+
+        this.renderChart('chart-cashflow-forecast', 'line', () => ({
+            labels,
+            datasets: [
+                {
+                    label: 'Projected Cash',
+                    data: cashProjection,
+                    borderColor: '#4facfe',
+                    backgroundColor: 'rgba(79,172,254,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                },
+                {
+                    label: 'Monthly Income',
+                    data: incomeData,
+                    borderColor: '#43e97b',
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0,
+                },
+                {
+                    label: 'Monthly Expenses',
+                    data: expenseData,
+                    borderColor: '#f5576c',
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0,
+                }
+            ]
+        }));
+    },
+
+    setCashFlowForecast(months, btn) {
+        document.querySelectorAll('.forecast-controls .btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.renderCashFlowForecast(months);
+    },
+
+    renderRecurringList(containerId, items, type) {
+        const container = document.getElementById(containerId);
+        if (items.length === 0) {
+            container.innerHTML = '<p class="muted">No recurring ' + type + ' items yet.</p>';
+            return;
+        }
+        container.innerHTML = items.map((item, i) => `
+            <div class="item-row">
+                <span class="item-name">${item.name}</span>
+                <span class="item-amount">${fmt(item.amount, item.currency || 'EUR')}/mo</span>
+                <span class="item-actions">
+                    <button onclick="app.editRecurring('${type}', ${i})" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button onclick="app.deleteRecurring('${type}', ${i})" title="Delete"><i class="fas fa-trash"></i></button>
+                </span>
+            </div>
+        `).join('');
+    },
+
+    // ===== ASSETS =====
+    renderAssets() {
+        const d = this.data;
+        const a = d.assets;
+
+        // Paris
+        document.getElementById('paris-value').textContent = fmt(a.paris.value);
+        document.getElementById('paris-mortgage').textContent = fmt(a.paris.mortgage);
+        document.getElementById('paris-equity').textContent = fmt(a.paris.value - a.paris.mortgage);
+        document.getElementById('paris-rent').textContent = fmt(a.paris.monthlyRent);
+        document.getElementById('paris-mortgage-payment').textContent = fmt(a.paris.mortgagePayment);
+        document.getElementById('paris-net-income').textContent = fmt(a.paris.monthlyRent - a.paris.mortgagePayment);
+
+        // Manarat
+        document.getElementById('manarat-price').textContent = fmt(a.manarat.purchasePrice, a.manarat.currency || 'AED');
+        document.getElementById('manarat-value').textContent = fmt(a.manarat.currentValue, a.manarat.currency || 'AED');
+        document.getElementById('manarat-paid').textContent = fmt(a.manarat.amountPaid, a.manarat.currency || 'AED');
+        const manaratRemaining = a.manarat.purchasePrice - a.manarat.amountPaid;
+        document.getElementById('manarat-remaining').textContent = fmt(manaratRemaining, a.manarat.currency || 'AED');
+        const manaratPct = a.manarat.purchasePrice > 0 ? (a.manarat.amountPaid / a.manarat.purchasePrice) * 100 : 0;
+        document.getElementById('manarat-progress').style.width = manaratPct + '%';
+        document.getElementById('manarat-progress-pct').textContent = fmtPct(manaratPct);
+
+        // Aegina
+        document.getElementById('aegina-value').textContent = fmt(a.aegina.propertyValue);
+        document.getElementById('aegina-budget').textContent = fmt(a.aegina.refurbBudget);
+        document.getElementById('aegina-spent').textContent = fmt(a.aegina.refurbSpent);
+        document.getElementById('aegina-remaining').textContent = fmt(a.aegina.refurbBudget - a.aegina.refurbSpent);
+
+        // SPY
+        document.getElementById('spy-shares').textContent = a.spy.shares || '--';
+        document.getElementById('spy-cost').textContent = a.spy.costBasis ? fmt(a.spy.costBasis, 'USD') : '--';
+        document.getElementById('spy-price').textContent = a.spy.currentPrice ? fmt(a.spy.currentPrice, 'USD') : '--';
+        const spyValue = a.spy.shares * a.spy.currentPrice;
+        document.getElementById('spy-value').textContent = fmt(spyValue, 'USD');
+        const spyGain = spyValue - (a.spy.shares * a.spy.costBasis);
+        const gainEl = document.getElementById('spy-gain');
+        gainEl.textContent = fmt(spyGain, 'USD');
+        gainEl.style.color = spyGain >= 0 ? '#2e7d32' : '#c62828';
+    },
+
+    // ===== NET WORTH =====
+    renderNetWorth() {
+        const nw = this.calculateNetWorth();
+
+        document.getElementById('nw-total').textContent = fmt(nw.netWorth);
+        document.getElementById('nw-assets').textContent = fmt(nw.totalAssets);
+        document.getElementById('nw-liabilities').textContent = fmt(nw.totalLiabilities);
+
+        if (this.data.networthHistory.length >= 2) {
+            const prev = this.data.networthHistory[this.data.networthHistory.length - 2].netWorth;
+            const change = nw.netWorth - prev;
+            const el = document.getElementById('nw-change');
+            el.textContent = (change >= 0 ? '+' : '') + fmt(change);
+            el.className = 'kpi-change ' + (change >= 0 ? 'positive' : 'negative');
+        }
+
+        // History chart
+        this.renderChart('chart-networth-history', 'line', () => {
+            const hist = this.data.networthHistory;
+            if (hist.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            return {
+                labels: hist.map(h => fmtDate(h.date)),
+                datasets: [
+                    { label: 'Net Worth', data: hist.map(h => h.netWorth), borderColor: '#4facfe', backgroundColor: 'rgba(79,172,254,0.1)', fill: true, tension: 0.4 },
+                    { label: 'Assets', data: hist.map(h => h.totalAssets), borderColor: '#43e97b', borderDash: [4,4], tension: 0.4, pointRadius: 2 },
+                    { label: 'Liabilities', data: hist.map(h => h.totalLiabilities), borderColor: '#f5576c', borderDash: [4,4], tension: 0.4, pointRadius: 2 },
+                ]
+            };
+        });
+
+        // Assets vs Liabilities bar
+        this.renderChart('chart-assets-liabilities', 'bar', () => ({
+            labels: ['Total'],
+            datasets: [
+                { label: 'Assets', data: [nw.totalAssets], backgroundColor: '#43e97b88', borderColor: '#43e97b', borderWidth: 1 },
+                { label: 'Liabilities', data: [nw.totalLiabilities], backgroundColor: '#f5576c88', borderColor: '#f5576c', borderWidth: 1 },
+            ]
+        }));
+
+        // Breakdown table
+        const tbody = document.getElementById('networth-tbody');
+        const items = [
+            { cat: 'Real Estate', name: 'Paris Flat (Equity)', value: this.data.assets.paris.value - this.data.assets.paris.mortgage },
+            { cat: 'Real Estate', name: 'Manarat Flat', value: this.data.assets.manarat.amountPaid },
+            { cat: 'Real Estate', name: 'Aegina House', value: this.data.assets.aegina.propertyValue },
+            { cat: 'Investments', name: 'SPY Shares', value: this.data.assets.spy.shares * this.data.assets.spy.currentPrice },
+            { cat: 'Cash', name: 'Bank Accounts', value: this.getTotalCash() },
+            { cat: 'Liabilities', name: 'Paris Mortgage', value: -this.data.assets.paris.mortgage },
+        ];
+        tbody.innerHTML = items.map(item => {
+            const pct = nw.netWorth !== 0 ? (item.value / nw.netWorth) * 100 : 0;
+            return `<tr>
+                <td>${item.cat}</td>
+                <td>${item.name}</td>
+                <td style="font-weight:600;color:${item.value >= 0 ? '#1a1a2e' : '#c62828'}">${fmt(item.value)}</td>
+                <td>${fmtPct(Math.abs(pct))}</td>
+            </tr>`;
+        }).join('');
+    },
+
+    // ===== CASH POSITIONS =====
+    renderCashPositions() {
+        const d = this.data;
+        const total = this.getTotalCash();
+        document.getElementById('cash-total').textContent = fmt(total);
+
+        // Bank account cards
+        const container = document.getElementById('bank-accounts-container');
+        container.innerHTML = d.bankAccounts.map(acc => `
+            <div class="bank-card">
+                <h4>${acc.name}</h4>
+                <div class="balance">${fmt(acc.balance, acc.currency)}</div>
+                <div class="currency">${acc.currency}</div>
+            </div>
+        `).join('');
+
+        // Cash distribution pie
+        this.renderChart('chart-cash-distribution', 'doughnut', () => {
+            const accs = d.bankAccounts.filter(a => a.balance > 0);
+            if (accs.length === 0) return { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#eee'] }] };
+            return {
+                labels: accs.map(a => a.name),
+                datasets: [{
+                    data: accs.map(a => a.balance),
+                    backgroundColor: accs.map((_, i) => getColor(i)),
+                }]
+            };
+        }, { plugins: { legend: { position: 'right' } } });
+
+        // Cash history
+        this.renderChart('chart-cash-history', 'line', () => {
+            const hist = d.cashHistory.slice(-12);
+            if (hist.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            return {
+                labels: hist.map(h => fmtDate(h.date)),
+                datasets: [{
+                    label: 'Total Cash',
+                    data: hist.map(h => h.total),
+                    borderColor: '#4facfe',
+                    backgroundColor: 'rgba(79,172,254,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                }]
+            };
+        });
+    },
+
+    // ===== BEHAVIOR =====
+    renderBehavior() {
+        const d = this.data;
+
+        // Spending trend
+        this.renderChart('chart-spending-trend', 'bar', () => {
+            const months = d.monthlySpending.slice(-12);
+            if (months.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            const avg = months.reduce((s, m) => s + m.total, 0) / months.length;
+            return {
+                labels: months.map(m => monthLabel(m.month)),
+                datasets: [
+                    { label: 'Monthly Spending', data: months.map(m => m.total), backgroundColor: months.map(m => m.total > avg * 1.15 ? '#f5576c88' : '#4facfe88'), borderColor: months.map(m => m.total > avg * 1.15 ? '#f5576c' : '#4facfe'), borderWidth: 1 },
+                    { label: 'Average', data: months.map(() => Math.round(avg)), type: 'line', borderColor: '#667eea', borderDash: [5, 5], pointRadius: 0 },
+                ]
+            };
+        });
+
+        // Spending by category
+        this.renderChart('chart-spending-category', 'radar', () => {
+            const months = d.monthlySpending.slice(-3);
+            if (months.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            const allCats = new Set();
+            months.forEach(m => Object.keys(m.categories).forEach(c => allCats.add(c)));
+            const cats = [...allCats];
+            return {
+                labels: cats.map(c => c.charAt(0).toUpperCase() + c.slice(1)),
+                datasets: months.map((m, i) => ({
+                    label: monthLabel(m.month),
+                    data: cats.map(c => m.categories[c] || 0),
+                    borderColor: getColor(i),
+                    backgroundColor: getColor(i) + '33',
+                    pointRadius: 3,
+                }))
+            };
+        }, { scales: { r: { beginAtZero: true } } });
+
+        // Behavior alerts
+        this.renderBehaviorAlerts();
+
+        // Month comparison
+        this.renderMonthComparison();
+    },
+
+    renderBehaviorAlerts() {
+        const d = this.data;
+        const container = document.getElementById('behavior-alerts');
+        const alerts = [];
+
+        if (d.monthlySpending.length >= 2) {
+            const curr = d.monthlySpending[d.monthlySpending.length - 1];
+            const prev = d.monthlySpending[d.monthlySpending.length - 2];
+            const change = ((curr.total - prev.total) / prev.total) * 100;
+
+            if (change > 15) {
+                alerts.push({ type: 'warning', icon: 'fa-exclamation-triangle', text: `<strong>Spending Alert:</strong> You spent ${fmtPct(change)} more in ${monthLabel(curr.month)} (${fmt(curr.total)}) compared to ${monthLabel(prev.month)} (${fmt(prev.total)}). Review your categories to identify what changed.` });
+            } else if (change > 5) {
+                alerts.push({ type: 'info', icon: 'fa-info-circle', text: `<strong>Slight Increase:</strong> Spending up ${fmtPct(change)} in ${monthLabel(curr.month)}. Keep an eye on this trend.` });
+            } else if (change < -10) {
+                alerts.push({ type: 'success', icon: 'fa-check-circle', text: `<strong>Great job!</strong> You reduced spending by ${fmtPct(Math.abs(change))} in ${monthLabel(curr.month)}. Keep it up!` });
+            }
+
+            // Category alerts
+            Object.keys(curr.categories).forEach(cat => {
+                const currVal = curr.categories[cat] || 0;
+                const prevVal = prev.categories[cat] || 0;
+                if (prevVal > 0 && currVal > prevVal * 1.3) {
+                    const catChange = ((currVal - prevVal) / prevVal) * 100;
+                    alerts.push({ type: 'warning', icon: 'fa-arrow-up', text: `<strong>${cat.charAt(0).toUpperCase() + cat.slice(1)}:</strong> Up ${fmtPct(catChange)} (${fmt(currVal)} vs ${fmt(prevVal)}). Consider if this was planned.` });
+                }
+            });
+        }
+
+        // Savings rate coaching
+        const income = this.getMonthlyIncome();
+        const expenses = this.getMonthlyExpenses();
+        if (income > 0) {
+            const savingsRate = ((income - expenses) / income) * 100;
+            if (savingsRate < 10) {
+                alerts.push({ type: 'warning', icon: 'fa-piggy-bank', text: `<strong>Low Savings Rate:</strong> You're saving only ${fmtPct(savingsRate)} of income. Financial experts recommend at least 20%. Look for expenses you can reduce.` });
+            } else if (savingsRate >= 30) {
+                alerts.push({ type: 'success', icon: 'fa-star', text: `<strong>Excellent Savings Rate:</strong> You're saving ${fmtPct(savingsRate)} of your income. Well done!` });
+            }
+        }
+
+        // Cash runway
+        const totalCash = this.getTotalCash();
+        if (expenses > 0 && totalCash > 0) {
+            const runway = totalCash / expenses;
+            if (runway < 3) {
+                alerts.push({ type: 'warning', icon: 'fa-clock', text: `<strong>Cash Runway Warning:</strong> At current spending, your cash reserves would last ${runway.toFixed(1)} months. Aim for at least 6 months of emergency fund.` });
+            }
+        }
+
+        if (alerts.length === 0) {
+            container.innerHTML = '<p class="muted">Add monthly spending data to receive behavior alerts and coaching.</p>';
+        } else {
+            container.innerHTML = alerts.map(a => `
+                <div class="alert-item ${a.type}">
+                    <i class="fas ${a.icon}"></i>
+                    <p>${a.text}</p>
+                </div>
+            `).join('');
+        }
+    },
+
+    renderMonthComparison() {
+        const d = this.data;
+        const container = document.getElementById('month-comparison');
+        if (d.monthlySpending.length < 2) {
+            container.innerHTML = '<p class="muted">Need at least 2 months of data for comparison.</p>';
+            return;
+        }
+        const curr = d.monthlySpending[d.monthlySpending.length - 1];
+        const prev = d.monthlySpending[d.monthlySpending.length - 2];
+        const allCats = new Set([...Object.keys(curr.categories), ...Object.keys(prev.categories)]);
+
+        let html = '<table class="data-table"><thead><tr><th>Category</th><th>' + monthLabel(prev.month) + '</th><th>' + monthLabel(curr.month) + '</th><th>Change</th></tr></thead><tbody>';
+        allCats.forEach(cat => {
+            const pVal = prev.categories[cat] || 0;
+            const cVal = curr.categories[cat] || 0;
+            const diff = cVal - pVal;
+            const color = diff > 0 ? '#c62828' : diff < 0 ? '#2e7d32' : '#888';
+            html += `<tr><td>${cat.charAt(0).toUpperCase() + cat.slice(1)}</td><td>${fmt(pVal)}</td><td>${fmt(cVal)}</td><td style="color:${color};font-weight:600">${diff >= 0 ? '+' : ''}${fmt(diff)}</td></tr>`;
+        });
+        const totalDiff = curr.total - prev.total;
+        const totalColor = totalDiff > 0 ? '#c62828' : totalDiff < 0 ? '#2e7d32' : '#888';
+        html += `<tr style="font-weight:700;border-top:2px solid #333"><td>Total</td><td>${fmt(prev.total)}</td><td>${fmt(curr.total)}</td><td style="color:${totalColor}">${totalDiff >= 0 ? '+' : ''}${fmt(totalDiff)}</td></tr>`;
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    },
+
+    // ===== AEGINA =====
+    renderAegina() {
+        const a = this.data.assets.aegina;
+        document.getElementById('aegina-total-budget').textContent = fmt(a.refurbBudget);
+        document.getElementById('aegina-total-spent').textContent = fmt(a.refurbSpent);
+        document.getElementById('aegina-total-remaining').textContent = fmt(a.refurbBudget - a.refurbSpent);
+        const pctUsed = a.refurbBudget > 0 ? (a.refurbSpent / a.refurbBudget) * 100 : 0;
+        document.getElementById('aegina-pct-used').textContent = fmtPct(pctUsed);
+
+        // Overall progress bar
+        document.getElementById('aegina-overall-progress').style.width = Math.min(pctUsed, 100) + '%';
+        document.getElementById('aegina-overall-pct').textContent = fmtPct(pctUsed);
+        if (pctUsed > 100) {
+            document.getElementById('aegina-overall-progress').style.background = 'linear-gradient(90deg, #f5576c, #c62828)';
+        }
+
+        // Timeline
+        const start = new Date('2025-01-01');
+        const end = new Date('2027-04-30');
+        const now = new Date();
+        const totalTime = end - start;
+        const elapsed = Math.max(0, now - start);
+        const timelinePct = Math.min((elapsed / totalTime) * 100, 100);
+        document.getElementById('aegina-timeline-current').style.width = timelinePct + '%';
+
+        // Category chart
+        this.renderChart('chart-aegina-categories', 'bar', () => {
+            const cats = a.categories;
+            return {
+                labels: cats.map(c => c.name),
+                datasets: [
+                    { label: 'Budget', data: cats.map(c => c.budget), backgroundColor: '#4facfe44', borderColor: '#4facfe', borderWidth: 1 },
+                    { label: 'Spent', data: cats.map(c => c.spent), backgroundColor: '#f5576c88', borderColor: '#f5576c', borderWidth: 1 },
+                ]
+            };
+        });
+
+        // Timeline chart
+        this.renderChart('chart-aegina-timeline', 'line', () => {
+            if (a.expenses.length === 0) return { labels: ['No data'], datasets: [{ data: [0] }] };
+            // Group expenses by month
+            const byMonth = {};
+            a.expenses.forEach(e => {
+                const m = e.date.substring(0, 7);
+                byMonth[m] = (byMonth[m] || 0) + e.amount;
+            });
+            const months = Object.keys(byMonth).sort();
+            let cumulative = 0;
+            const cumData = months.map(m => { cumulative += byMonth[m]; return cumulative; });
+            return {
+                labels: months.map(m => monthLabel(m)),
+                datasets: [
+                    { label: 'Cumulative Spend', data: cumData, borderColor: '#f5576c', backgroundColor: 'rgba(245,87,108,0.1)', fill: true, tension: 0.3 },
+                    { label: 'Budget', data: months.map(() => a.refurbBudget), borderColor: '#4facfe', borderDash: [5, 5], pointRadius: 0 },
+                ]
+            };
+        });
+
+        // Category table
+        const tbody = document.getElementById('aegina-category-tbody');
+        tbody.innerHTML = a.categories.map(cat => {
+            const remaining = cat.budget - cat.spent;
+            const pct = cat.budget > 0 ? (cat.spent / cat.budget) * 100 : 0;
+            const barColor = pct > 100 ? '#c62828' : pct > 80 ? '#f57c00' : '#4facfe';
+            return `<tr>
+                <td>${cat.name}</td>
+                <td>${fmt(cat.budget)}</td>
+                <td>${fmt(cat.spent)}</td>
+                <td style="color:${remaining < 0 ? '#c62828' : '#2e7d32'}">${fmt(remaining)}</td>
+                <td><div class="progress-bar" style="width:120px;height:8px;display:inline-block;vertical-align:middle"><div class="progress-fill" style="width:${Math.min(pct, 100)}%;background:${barColor}"></div></div> ${fmtPct(pct)}</td>
+            </tr>`;
+        }).join('');
+
+        // Expense log
+        const logContainer = document.getElementById('aegina-expense-log');
+        if (a.expenses.length === 0) {
+            logContainer.innerHTML = '<p class="muted">No expenses recorded yet.</p>';
+        } else {
+            logContainer.innerHTML = a.expenses.slice().reverse().slice(0, 20).map((e, i) => {
+                const idx = a.expenses.length - 1 - i;
+                return `<div class="item-row">
+                    <span class="item-name">${e.description} <small style="color:#999">(${e.category})</small></span>
+                    <span>${fmtDate(e.date)}</span>
+                    <span class="item-amount">${fmt(e.amount)}</span>
+                    <span class="item-actions"><button onclick="app.deleteAeginaExpense(${idx})" title="Delete"><i class="fas fa-trash"></i></button></span>
+                </div>`;
+            }).join('');
+        }
+    },
+
+    // ===== UPDATE WIZARD =====
+    renderUpdateWizard() {
+        const container = document.getElementById('wizard-bank-inputs');
+        container.innerHTML = this.data.bankAccounts.map(acc => `
+            <div class="form-group">
+                <label>${acc.name} (${acc.currency})</label>
+                <input type="number" id="wizard-bank-${acc.id}" step="0.01" placeholder="Current balance" value="${acc.balance || ''}">
+            </div>
+        `).join('');
+    },
+
+    submitWizard() {
+        const d = this.data;
+
+        // Bank balances
+        d.bankAccounts.forEach(acc => {
+            const input = document.getElementById('wizard-bank-' + acc.id);
+            if (input && input.value) {
+                acc.balance = parseFloat(input.value);
+                acc.history.push({ date: new Date().toISOString().split('T')[0], balance: acc.balance });
+            }
+        });
+
+        // SPY
+        const spyShares = document.getElementById('wizard-spy-shares');
+        const spyPrice = document.getElementById('wizard-spy-price');
+        if (spyShares.value) d.assets.spy.shares = parseFloat(spyShares.value);
+        if (spyPrice.value) d.assets.spy.currentPrice = parseFloat(spyPrice.value);
+
+        // Monthly spending
+        const cats = ['housing', 'food', 'transport', 'utilities', 'entertainment', 'other'];
+        const spending = {};
+        let total = 0;
+        cats.forEach(cat => {
+            const input = document.getElementById('wizard-spend-' + cat);
+            const val = input && input.value ? parseFloat(input.value) : 0;
+            if (val > 0) {
+                spending[cat] = val;
+                total += val;
+            }
+        });
+
+        if (total > 0) {
+            const month = currentMonth();
+            const existing = d.monthlySpending.findIndex(m => m.month === month);
+            if (existing >= 0) {
+                d.monthlySpending[existing] = { month, categories: spending, total };
+            } else {
+                d.monthlySpending.push({ month, categories: spending, total });
+            }
+            d.monthlySpending.sort((a, b) => a.month.localeCompare(b.month));
+        }
+
+        // Snapshot cash history
+        const totalCash = d.bankAccounts.reduce((s, a) => s + a.balance, 0);
+        d.cashHistory.push({ date: new Date().toISOString().split('T')[0], total: totalCash });
+
+        // Snapshot net worth
+        const nw = this.calculateNetWorthFromData(d);
+        d.networthHistory.push({ date: new Date().toISOString().split('T')[0], ...nw });
+
+        this.save();
+        this.renderAll();
+        alert('Data updated successfully!');
+    },
+
+    // ===== CALCULATIONS =====
+    calculateNetWorth() {
+        return this.calculateNetWorthFromData(this.data);
+    },
+
+    calculateNetWorthFromData(d) {
+        const parisEquity = d.assets.paris.value - d.assets.paris.mortgage;
+        const manaratValue = d.assets.manarat.amountPaid; // equity paid so far
+        const aeginaValue = d.assets.aegina.propertyValue;
+        const spyValue = d.assets.spy.shares * d.assets.spy.currentPrice;
+        const cash = d.bankAccounts.reduce((s, a) => s + a.balance, 0);
+
+        const totalAssets = Math.max(0, parisEquity) + manaratValue + aeginaValue + spyValue + cash + d.assets.paris.value;
+        // More accurate: assets = paris value + manarat paid + aegina value + spy + cash
+        // liabilities = paris mortgage
+        const realAssets = d.assets.paris.value + manaratValue + aeginaValue + spyValue + cash;
+        const totalLiabilities = d.assets.paris.mortgage;
+        const netWorth = realAssets - totalLiabilities;
+
+        return { netWorth, totalAssets: realAssets, totalLiabilities };
+    },
+
+    getTotalCash() {
+        return this.data.bankAccounts.reduce((s, a) => s + (a.balance || 0), 0);
+    },
+
+    getMonthlyIncome() {
+        return this.data.recurringIncome.reduce((s, i) => s + (i.amount || 0), 0);
+    },
+
+    getMonthlyExpenses() {
+        return this.data.recurringExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+    },
+
+    getLatestMonthlySpend() {
+        const ms = this.data.monthlySpending;
+        return ms.length > 0 ? ms[ms.length - 1].total : 0;
+    },
+
+    getAssetBreakdown() {
+        const d = this.data;
+        return [
+            { name: 'Paris Flat', value: d.assets.paris.value },
+            { name: 'Manarat Flat', value: d.assets.manarat.amountPaid },
+            { name: 'Aegina House', value: d.assets.aegina.propertyValue },
+            { name: 'SPY Shares', value: d.assets.spy.shares * d.assets.spy.currentPrice },
+            { name: 'Cash', value: this.getTotalCash() },
+        ].filter(i => i.value > 0);
+    },
+
+    // ===== COACHING TIPS =====
+    renderCoachingTips() {
+        const tips = [];
+        const d = this.data;
+        const income = this.getMonthlyIncome();
+        const expenses = this.getMonthlyExpenses();
+
+        if (!d.lastUpdated) {
+            tips.push({ icon: '👋', text: '<strong>Welcome!</strong> Start by going to <strong>Update Data</strong> to enter your financial information. The more data you provide, the better insights you\'ll get.' });
+        }
+
+        if (income > 0 && expenses > 0) {
+            const savingsRate = ((income - expenses) / income) * 100;
+            if (savingsRate < 20) {
+                tips.push({ icon: '💡', text: `Your savings rate is ${fmtPct(savingsRate)}. Try to aim for 20%+ by reducing discretionary spending.` });
+            }
+            if (savingsRate >= 20) {
+                tips.push({ icon: '⭐', text: `Your savings rate of ${fmtPct(savingsRate)} is strong. Consider investing the surplus.` });
+            }
+        }
+
+        // Manarat upcoming payment
+        const manaratRemaining = d.assets.manarat.purchasePrice - d.assets.manarat.amountPaid;
+        if (manaratRemaining > 0) {
+            tips.push({ icon: '🏗️', text: `You have ${fmt(manaratRemaining, d.assets.manarat.currency || 'AED')} remaining on your Manarat flat. Delivery is September 2026 - make sure you plan your cash flow for the final payments.` });
+        }
+
+        // Aegina budget
+        const aeginaPct = d.assets.aegina.refurbBudget > 0 ? (d.assets.aegina.refurbSpent / d.assets.aegina.refurbBudget) * 100 : 0;
+        if (aeginaPct > 80) {
+            tips.push({ icon: '⚠️', text: `Aegina refurbishment is at ${fmtPct(aeginaPct)} of budget. Monitor closely to avoid overruns.` });
+        }
+
+        // Cash runway
+        const totalCash = this.getTotalCash();
+        if (expenses > 0 && totalCash > 0) {
+            const runway = totalCash / expenses;
+            tips.push({ icon: '🏦', text: `Your cash runway is ${runway.toFixed(1)} months. ${runway < 6 ? 'Consider building up your emergency fund.' : 'This is a healthy buffer.'}` });
+        }
+
+        const container = document.getElementById('coaching-tips-list');
+        if (tips.length === 0) {
+            container.innerHTML = '<p class="muted">Update your data to receive personalized coaching tips.</p>';
+        } else {
+            container.innerHTML = tips.map(t => `
+                <div class="tip-item">
+                    <span class="tip-icon">${t.icon}</span>
+                    <span class="tip-text">${t.text}</span>
+                </div>
+            `).join('');
+        }
+    },
+
+    renderCashFlowTips() {
+        const tips = [];
+        const income = this.getMonthlyIncome();
+        const expenses = this.getMonthlyExpenses();
+        const net = income - expenses;
+
+        if (income === 0 && expenses === 0) {
+            document.getElementById('cashflow-tips-list').innerHTML = '<p class="muted">Add your income and expense data to get tips.</p>';
+            return;
+        }
+
+        if (net < 0) {
+            tips.push({ icon: '🚨', text: `<strong>Negative Cash Flow:</strong> You're spending ${fmt(Math.abs(net))} more than you earn monthly. This is unsustainable - review your expenses urgently.` });
+        } else if (net < income * 0.1) {
+            tips.push({ icon: '⚠️', text: `Your net cash flow is tight at ${fmt(net)}/month. Try to increase the gap between income and expenses.` });
+        } else {
+            tips.push({ icon: '✅', text: `Positive monthly cash flow of ${fmt(net)}. Consider investing the surplus for long-term growth.` });
+        }
+
+        // Paris rental yield
+        const paris = this.data.assets.paris;
+        if (paris.value > 0 && paris.monthlyRent > 0) {
+            const annualYield = (paris.monthlyRent * 12 / paris.value) * 100;
+            tips.push({ icon: '🏠', text: `Paris flat gross rental yield: ${fmtPct(annualYield)}. Net yield after mortgage: ${fmtPct(((paris.monthlyRent - paris.mortgagePayment) * 12 / paris.value) * 100)}.` });
+        }
+
+        document.getElementById('cashflow-tips-list').innerHTML = tips.map(t => `
+            <div class="tip-item">
+                <span class="tip-icon">${t.icon}</span>
+                <span class="tip-text">${t.text}</span>
+            </div>
+        `).join('');
+    },
+
+    // ===== CHART HELPER =====
+    renderChart(canvasId, type, dataFn, extraOpts) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        if (APP.charts[canvasId]) {
+            APP.charts[canvasId].destroy();
+        }
+
+        const data = dataFn();
+        const opts = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { font: { family: 'Inter', size: 11 } } },
+                datalabels: { display: false },
+            },
+            scales: type === 'doughnut' || type === 'pie' || type === 'radar' ? {} : {
+                y: { beginAtZero: false, ticks: { font: { family: 'Inter', size: 11 } } },
+                x: { ticks: { font: { family: 'Inter', size: 11 } } },
+            },
+            ...extraOpts,
+        };
+
+        APP.charts[canvasId] = new Chart(canvas, { type, data, options: opts });
+    },
+
+    // ===== MODALS =====
+    openModal(title, bodyHtml, footerHtml) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').innerHTML = bodyHtml;
+        document.getElementById('modal-footer').innerHTML = footerHtml || '';
+        document.getElementById('modal-overlay').classList.add('active');
+    },
+
+    closeModal() {
+        document.getElementById('modal-overlay').classList.remove('active');
+    },
+
+    // Recurring income/expense modal
+    openRecurringModal(type, editIndex) {
+        const isEdit = editIndex !== undefined;
+        const item = isEdit ? (type === 'income' ? this.data.recurringIncome[editIndex] : this.data.recurringExpenses[editIndex]) : {};
+        const title = (isEdit ? 'Edit' : 'Add') + ' Recurring ' + (type === 'income' ? 'Income' : 'Expense');
+
+        const body = `
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="modal-rec-name" value="${item.name || ''}" placeholder="e.g. Salary, Rent, etc.">
+            </div>
+            <div class="form-group">
+                <label>Amount (monthly)</label>
+                <input type="number" id="modal-rec-amount" step="0.01" value="${item.amount || ''}" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Currency</label>
+                <select id="modal-rec-currency">
+                    <option value="EUR" ${(item.currency || 'EUR') === 'EUR' ? 'selected' : ''}>EUR</option>
+                    <option value="USD" ${item.currency === 'USD' ? 'selected' : ''}>USD</option>
+                    <option value="GBP" ${item.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                    <option value="AED" ${item.currency === 'AED' ? 'selected' : ''}>AED</option>
+                </select>
+            </div>
+        `;
+
+        const footer = `<button class="btn btn-primary" onclick="app.saveRecurring('${type}', ${isEdit ? editIndex : -1})">Save</button>`;
+        this.openModal(title, body, footer);
+    },
+
+    saveRecurring(type, editIndex) {
+        const name = document.getElementById('modal-rec-name').value.trim();
+        const amount = parseFloat(document.getElementById('modal-rec-amount').value);
+        const currency = document.getElementById('modal-rec-currency').value;
+
+        if (!name || isNaN(amount)) { alert('Please fill in all fields.'); return; }
+
+        const item = { name, amount, currency };
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+
+        if (editIndex >= 0) {
+            list[editIndex] = item;
+        } else {
+            list.push(item);
+        }
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    editRecurring(type, index) {
+        this.openRecurringModal(type, index);
+    },
+
+    deleteRecurring(type, index) {
+        if (!confirm('Delete this item?')) return;
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+        list.splice(index, 1);
+        this.save();
+        this.renderAll();
+    },
+
+    // Asset Edit Modal
+    openAssetEditModal(assetKey) {
+        const a = this.data.assets[assetKey];
+        let body = '';
+
+        switch (assetKey) {
+            case 'paris':
+                body = `
+                    <div class="form-group"><label>Property Value (EUR)</label><input type="number" id="modal-a-value" step="1" value="${a.value}"></div>
+                    <div class="form-group"><label>Mortgage Outstanding (EUR)</label><input type="number" id="modal-a-mortgage" step="1" value="${a.mortgage}"></div>
+                    <div class="form-group"><label>Monthly Rent Income (EUR)</label><input type="number" id="modal-a-rent" step="1" value="${a.monthlyRent}"></div>
+                    <div class="form-group"><label>Monthly Mortgage Payment (EUR)</label><input type="number" id="modal-a-mpayment" step="1" value="${a.mortgagePayment}"></div>
+                    <div class="form-group"><label>Mortgage Rate (%)</label><input type="number" id="modal-a-rate" step="0.01" value="${a.mortgageRate}"></div>
+                `;
+                break;
+            case 'manarat':
+                body = `
+                    <div class="form-group"><label>Purchase Price</label><input type="number" id="modal-a-price" step="1" value="${a.purchasePrice}"></div>
+                    <div class="form-group"><label>Current Value Estimate</label><input type="number" id="modal-a-curval" step="1" value="${a.currentValue}"></div>
+                    <div class="form-group"><label>Amount Paid So Far</label><input type="number" id="modal-a-paid" step="1" value="${a.amountPaid}"></div>
+                    <div class="form-group"><label>Currency</label>
+                        <select id="modal-a-currency">
+                            <option value="AED" ${a.currency === 'AED' ? 'selected' : ''}>AED</option>
+                            <option value="EUR" ${a.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                            <option value="USD" ${a.currency === 'USD' ? 'selected' : ''}>USD</option>
+                        </select>
+                    </div>
+                `;
+                break;
+            case 'aegina':
+                body = `
+                    <div class="form-group"><label>Property Value (EUR)</label><input type="number" id="modal-a-propval" step="1" value="${a.propertyValue}"></div>
+                    <div class="form-group"><label>Total Refurbishment Budget (EUR)</label><input type="number" id="modal-a-budget" step="1" value="${a.refurbBudget}"></div>
+                `;
+                break;
+            case 'spy':
+                body = `
+                    <div class="form-group"><label>Number of Shares</label><input type="number" id="modal-a-shares" step="0.01" value="${a.shares}"></div>
+                    <div class="form-group"><label>Average Cost Basis ($ per share)</label><input type="number" id="modal-a-cost" step="0.01" value="${a.costBasis}"></div>
+                    <div class="form-group"><label>Current Price ($ per share)</label><input type="number" id="modal-a-price2" step="0.01" value="${a.currentPrice}"></div>
+                `;
+                break;
+        }
+
+        const footer = `<button class="btn btn-primary" onclick="app.saveAsset('${assetKey}')">Save</button>`;
+        this.openModal('Update ' + assetKey.charAt(0).toUpperCase() + assetKey.slice(1), body, footer);
+    },
+
+    saveAsset(key) {
+        const a = this.data.assets[key];
+        const today = new Date().toISOString().split('T')[0];
+
+        switch (key) {
+            case 'paris':
+                a.value = parseFloat(document.getElementById('modal-a-value').value) || 0;
+                a.mortgage = parseFloat(document.getElementById('modal-a-mortgage').value) || 0;
+                a.monthlyRent = parseFloat(document.getElementById('modal-a-rent').value) || 0;
+                a.mortgagePayment = parseFloat(document.getElementById('modal-a-mpayment').value) || 0;
+                a.mortgageRate = parseFloat(document.getElementById('modal-a-rate').value) || 0;
+                a.history.push({ date: today, value: a.value, mortgage: a.mortgage });
+                break;
+            case 'manarat':
+                a.purchasePrice = parseFloat(document.getElementById('modal-a-price').value) || 0;
+                a.currentValue = parseFloat(document.getElementById('modal-a-curval').value) || 0;
+                a.amountPaid = parseFloat(document.getElementById('modal-a-paid').value) || 0;
+                a.currency = document.getElementById('modal-a-currency').value;
+                a.history.push({ date: today, value: a.currentValue, paid: a.amountPaid });
+                break;
+            case 'aegina':
+                a.propertyValue = parseFloat(document.getElementById('modal-a-propval').value) || 0;
+                a.refurbBudget = parseFloat(document.getElementById('modal-a-budget').value) || 0;
+                break;
+            case 'spy':
+                a.shares = parseFloat(document.getElementById('modal-a-shares').value) || 0;
+                a.costBasis = parseFloat(document.getElementById('modal-a-cost').value) || 0;
+                a.currentPrice = parseFloat(document.getElementById('modal-a-price2').value) || 0;
+                a.history.push({ date: today, shares: a.shares, price: a.currentPrice });
+                break;
+        }
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    // Bank Account Modal
+    openBankAccountModal() {
+        let body = '<p style="margin-bottom:12px">Update your bank account names, balances, and currencies:</p>';
+        this.data.bankAccounts.forEach((acc, i) => {
+            body += `
+                <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:12px">
+                    <div class="form-group"><label>Account Name</label><input type="text" id="modal-bank-name-${i}" value="${acc.name}"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Balance</label><input type="number" id="modal-bank-bal-${i}" step="0.01" value="${acc.balance}"></div>
+                        <div class="form-group"><label>Currency</label>
+                            <select id="modal-bank-cur-${i}">
+                                <option value="EUR" ${acc.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                                <option value="USD" ${acc.currency === 'USD' ? 'selected' : ''}>USD</option>
+                                <option value="GBP" ${acc.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                                <option value="AED" ${acc.currency === 'AED' ? 'selected' : ''}>AED</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const footer = `<button class="btn btn-primary" onclick="app.saveBankAccounts()">Save All</button>`;
+        this.openModal('Bank Accounts', body, footer);
+    },
+
+    saveBankAccounts() {
+        const today = new Date().toISOString().split('T')[0];
+        this.data.bankAccounts.forEach((acc, i) => {
+            acc.name = document.getElementById('modal-bank-name-' + i).value.trim() || acc.name;
+            acc.balance = parseFloat(document.getElementById('modal-bank-bal-' + i).value) || 0;
+            acc.currency = document.getElementById('modal-bank-cur-' + i).value;
+            acc.history.push({ date: today, balance: acc.balance });
+        });
+
+        // Snapshot
+        const totalCash = this.data.bankAccounts.reduce((s, a) => s + a.balance, 0);
+        this.data.cashHistory.push({ date: today, total: totalCash });
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    // Spending Modal
+    openSpendingModal() {
+        const month = currentMonth();
+        const existing = this.data.monthlySpending.find(m => m.month === month);
+        const cats = existing ? existing.categories : {};
+
+        const body = `
+            <div class="form-group"><label>Month</label><input type="month" id="modal-spend-month" value="${month}"></div>
+            <div class="form-group"><label>Housing</label><input type="number" id="modal-spend-housing" step="0.01" value="${cats.housing || ''}"></div>
+            <div class="form-group"><label>Food & Dining</label><input type="number" id="modal-spend-food" step="0.01" value="${cats.food || ''}"></div>
+            <div class="form-group"><label>Transport</label><input type="number" id="modal-spend-transport" step="0.01" value="${cats.transport || ''}"></div>
+            <div class="form-group"><label>Utilities</label><input type="number" id="modal-spend-utilities" step="0.01" value="${cats.utilities || ''}"></div>
+            <div class="form-group"><label>Entertainment</label><input type="number" id="modal-spend-entertainment" step="0.01" value="${cats.entertainment || ''}"></div>
+            <div class="form-group"><label>Health</label><input type="number" id="modal-spend-health" step="0.01" value="${cats.health || ''}"></div>
+            <div class="form-group"><label>Shopping</label><input type="number" id="modal-spend-shopping" step="0.01" value="${cats.shopping || ''}"></div>
+            <div class="form-group"><label>Other</label><input type="number" id="modal-spend-other" step="0.01" value="${cats.other || ''}"></div>
+        `;
+
+        const footer = `<button class="btn btn-primary" onclick="app.saveSpending()">Save</button>`;
+        this.openModal('Monthly Spending', body, footer);
+    },
+
+    saveSpending() {
+        const month = document.getElementById('modal-spend-month').value;
+        const catNames = ['housing', 'food', 'transport', 'utilities', 'entertainment', 'health', 'shopping', 'other'];
+        const categories = {};
+        let total = 0;
+        catNames.forEach(cat => {
+            const val = parseFloat(document.getElementById('modal-spend-' + cat).value) || 0;
+            if (val > 0) { categories[cat] = val; total += val; }
+        });
+
+        if (total === 0) { alert('Please enter at least one spending category.'); return; }
+
+        const existing = this.data.monthlySpending.findIndex(m => m.month === month);
+        if (existing >= 0) {
+            this.data.monthlySpending[existing] = { month, categories, total };
+        } else {
+            this.data.monthlySpending.push({ month, categories, total });
+        }
+        this.data.monthlySpending.sort((a, b) => a.month.localeCompare(b.month));
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    // Aegina Expense Modal
+    openAeginaExpenseModal() {
+        const cats = this.data.assets.aegina.categories;
+        const body = `
+            <div class="form-group"><label>Date</label><input type="date" id="modal-ae-date" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Category</label>
+                <select id="modal-ae-cat">
+                    ${cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group"><label>Description</label><input type="text" id="modal-ae-desc" placeholder="e.g. Electrician invoice"></div>
+            <div class="form-group"><label>Amount (EUR)</label><input type="number" id="modal-ae-amount" step="0.01" placeholder="0"></div>
+        `;
+        const footer = `<button class="btn btn-primary" onclick="app.saveAeginaExpense()">Save</button>`;
+        this.openModal('Add Aegina Expense', body, footer);
+    },
+
+    saveAeginaExpense() {
+        const date = document.getElementById('modal-ae-date').value;
+        const category = document.getElementById('modal-ae-cat').value;
+        const description = document.getElementById('modal-ae-desc').value.trim();
+        const amount = parseFloat(document.getElementById('modal-ae-amount').value);
+
+        if (!date || !description || isNaN(amount) || amount <= 0) { alert('Please fill in all fields.'); return; }
+
+        const a = this.data.assets.aegina;
+        a.expenses.push({ date, category, description, amount });
+        a.refurbSpent += amount;
+
+        // Update category spent
+        const cat = a.categories.find(c => c.name === category);
+        if (cat) cat.spent += amount;
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    deleteAeginaExpense(index) {
+        if (!confirm('Delete this expense?')) return;
+        const a = this.data.assets.aegina;
+        const expense = a.expenses[index];
+        a.refurbSpent -= expense.amount;
+        const cat = a.categories.find(c => c.name === expense.category);
+        if (cat) cat.spent -= expense.amount;
+        a.expenses.splice(index, 1);
+        this.save();
+        this.renderAll();
+    },
+
+    // Aegina Category Modal
+    openAeginaCategoryModal() {
+        const cats = this.data.assets.aegina.categories;
+        let body = '<p style="margin-bottom:12px">Set budgets for each refurbishment category:</p>';
+        cats.forEach((cat, i) => {
+            body += `
+                <div class="form-row" style="margin-bottom:8px;align-items:end">
+                    <div class="form-group"><label>${cat.name}</label><input type="number" id="modal-aegcat-${i}" step="1" value="${cat.budget}" placeholder="Budget"></div>
+                </div>
+            `;
+        });
+        body += `
+            <div style="border-top:1px solid #eee;padding-top:12px;margin-top:12px">
+                <div class="form-group"><label>Add New Category</label><input type="text" id="modal-aegcat-new" placeholder="Category name"></div>
+            </div>
+        `;
+        const footer = `<button class="btn btn-primary" onclick="app.saveAeginaCategories()">Save</button>`;
+        this.openModal('Aegina Refurb Categories', body, footer);
+    },
+
+    saveAeginaCategories() {
+        const cats = this.data.assets.aegina.categories;
+        cats.forEach((cat, i) => {
+            cat.budget = parseFloat(document.getElementById('modal-aegcat-' + i).value) || 0;
+        });
+
+        // Recalculate total budget
+        this.data.assets.aegina.refurbBudget = cats.reduce((s, c) => s + c.budget, 0);
+
+        // New category
+        const newName = document.getElementById('modal-aegcat-new').value.trim();
+        if (newName) {
+            cats.push({ name: newName, budget: 0, spent: 0 });
+        }
+
+        this.save();
+        this.closeModal();
+        this.renderAll();
+    },
+
+    // ===== FILE UPLOAD =====
+    setupUpload() {
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-upload');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) this.processCSV(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) this.processCSV(e.target.files[0]);
+        });
+    },
+
+    processCSV(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length < 2) { alert('CSV appears empty.'); return; }
+
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const rows = lines.slice(1).map(l => {
+                const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                const row = {};
+                headers.forEach((h, i) => row[h] = vals[i]);
+                return row;
+            });
+
+            // Try to auto-detect columns
+            const dateCol = headers.find(h => /date/i.test(h));
+            const amountCol = headers.find(h => /amount|value|sum/i.test(h));
+            const descCol = headers.find(h => /desc|narrat|detail|memo|ref/i.test(h));
+
+            if (!amountCol) {
+                alert('Could not find an "amount" column in your CSV. Please ensure your CSV has headers including "date", "amount", and "description".');
+                return;
+            }
+
+            // Categorize transactions
+            const categories = { housing: 0, food: 0, transport: 0, utilities: 0, entertainment: 0, health: 0, shopping: 0, other: 0 };
+            const keywords = {
+                housing: /rent|mortgage|property|housing|accommodation/i,
+                food: /food|restaurant|grocery|supermarket|cafe|dining|uber\s*eat|deliveroo/i,
+                transport: /transport|uber|taxi|fuel|gas|petrol|metro|bus|train|airline|flight/i,
+                utilities: /electric|water|gas|internet|phone|telecom|utility|energy/i,
+                entertainment: /netflix|spotify|cinema|theater|gym|sport|subscription|entertainment/i,
+                health: /pharmacy|doctor|hospital|health|dental|medical/i,
+                shopping: /amazon|shop|store|retail|clothing|zara|h&m/i,
+            };
+
+            let totalExpenses = 0;
+            rows.forEach(row => {
+                const amount = parseFloat(row[amountCol]);
+                if (isNaN(amount) || amount >= 0) return; // Only expenses (negative amounts)
+                const absAmount = Math.abs(amount);
+                const desc = row[descCol] || '';
+
+                let matched = false;
+                for (const [cat, regex] of Object.entries(keywords)) {
+                    if (regex.test(desc)) {
+                        categories[cat] += absAmount;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) categories.other += absAmount;
+                totalExpenses += absAmount;
+            });
+
+            // Show preview
+            const preview = document.getElementById('upload-preview');
+            preview.classList.remove('hidden');
+            let html = `<h4>Statement Analysis (${rows.length} transactions)</h4>`;
+            html += `<p><strong>Total Expenses Found:</strong> ${fmt(totalExpenses)}</p>`;
+            html += '<table class="data-table"><thead><tr><th>Category</th><th>Amount</th></tr></thead><tbody>';
+            for (const [cat, val] of Object.entries(categories)) {
+                if (val > 0) {
+                    html += `<tr><td>${cat.charAt(0).toUpperCase() + cat.slice(1)}</td><td>${fmt(val)}</td></tr>`;
+                }
+            }
+            html += '</tbody></table>';
+            html += `<button class="btn btn-primary" style="margin-top:12px" onclick="app.applyCSVData(${JSON.stringify(categories).replace(/"/g, '&quot;')}, ${totalExpenses})">Apply to Current Month</button>`;
+            preview.innerHTML = html;
+        };
+        reader.readAsText(file);
+    },
+
+    applyCSVData(categories, total) {
+        const month = currentMonth();
+        const cleanCats = {};
+        for (const [k, v] of Object.entries(categories)) {
+            if (v > 0) cleanCats[k] = Math.round(v * 100) / 100;
+        }
+
+        const existing = this.data.monthlySpending.findIndex(m => m.month === month);
+        if (existing >= 0) {
+            this.data.monthlySpending[existing] = { month, categories: cleanCats, total: Math.round(total * 100) / 100 };
+        } else {
+            this.data.monthlySpending.push({ month, categories: cleanCats, total: Math.round(total * 100) / 100 });
+        }
+        this.data.monthlySpending.sort((a, b) => a.month.localeCompare(b.month));
+
+        this.save();
+        this.renderAll();
+        alert('Spending data applied for ' + month + '!');
+    },
+
+    // ===== DATA MANAGEMENT =====
+    exportData() {
+        const blob = new Blob([JSON.stringify(this.data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'findash-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                this.data = deepMerge(defaultData(), imported);
+                this.save();
+                this.renderAll();
+                alert('Data imported successfully!');
+            } catch (err) {
+                alert('Error importing data: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    resetData() {
+        if (!confirm('Are you sure you want to reset ALL data? This cannot be undone.')) return;
+        if (!confirm('Really? All your financial data will be permanently deleted.')) return;
+        this.data = defaultData();
+        this.save();
+        this.renderAll();
+        alert('All data has been reset.');
+    },
+};
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => app.init());
+
+    </script>
+</body>
+</html>

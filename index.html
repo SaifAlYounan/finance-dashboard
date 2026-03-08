@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Financial Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-chart-line"></i>
+            <span>FinDash</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-section="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></li>
+            <li data-section="cashflow"><i class="fas fa-exchange-alt"></i><span>Cash Flow</span></li>
+            <li data-section="assets"><i class="fas fa-building"></i><span>Assets</span></li>
+            <li data-section="networth"><i class="fas fa-coins"></i><span>Net Worth</span></li>
+            <li data-section="cash"><i class="fas fa-university"></i><span>Cash Positions</span></li>
+            <li data-section="behavior"><i class="fas fa-brain"></i><span>Behavior</span></li>
+            <li data-section="aegina"><i class="fas fa-hammer"></i><span>Aegina Project</span></li>
+            <li data-section="update"><i class="fas fa-upload"></i><span>Update Data</span></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+        <!-- DASHBOARD SECTION -->
+        <section id="section-dashboard" class="section active">
+            <div class="section-header">
+                <h1>Financial Overview</h1>
+                <span class="last-updated" id="last-updated-label">Last updated: Never</span>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-wallet"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Net Worth</span>
+                        <span class="kpi-value" id="kpi-networth">--</span>
+                        <span class="kpi-change positive" id="kpi-networth-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-piggy-bank"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Cash</span>
+                        <span class="kpi-value" id="kpi-cash">--</span>
+                        <span class="kpi-change" id="kpi-cash-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-building"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Assets</span>
+                        <span class="kpi-value" id="kpi-assets">--</span>
+                        <span class="kpi-change" id="kpi-assets-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-credit-card"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Spend</span>
+                        <span class="kpi-value" id="kpi-spend">--</span>
+                        <span class="kpi-change" id="kpi-spend-change"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Net Worth Over Time</h3>
+                    <canvas id="chart-networth-timeline"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Asset Allocation</h3>
+                    <canvas id="chart-asset-allocation"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Monthly Income vs Expenses</h3>
+                    <canvas id="chart-income-expenses"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Cash Position Trend</h3>
+                    <canvas id="chart-cash-trend"></canvas>
+                </div>
+            </div>
+
+            <!-- Coaching Tips -->
+            <div class="tips-panel" id="dashboard-tips">
+                <h3><i class="fas fa-lightbulb"></i> Financial Coach</h3>
+                <div id="coaching-tips-list">
+                    <p class="muted">Update your data to receive personalized coaching tips.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASH FLOW SECTION -->
+        <section id="section-cashflow" class="section">
+            <div class="section-header">
+                <h1>Cash Flow Analysis</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-arrow-down"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Income</span>
+                        <span class="kpi-value" id="cf-income">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-arrow-up"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Monthly Expenses</span>
+                        <span class="kpi-value" id="cf-expenses">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-balance-scale"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Net Cash Flow</span>
+                        <span class="kpi-value" id="cf-net">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#f3e5f5;color:#6a1b9a;"><i class="fas fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Savings Rate</span>
+                        <span class="kpi-value" id="cf-savings-rate">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recurring Items -->
+            <div class="panel">
+                <h3>Recurring Income</h3>
+                <div id="recurring-income-list" class="item-list"></div>
+                <button class="btn btn-sm" onclick="app.openRecurringModal('income')"><i class="fas fa-plus"></i> Add Income</button>
+            </div>
+            <div class="panel">
+                <h3>Recurring Expenses</h3>
+                <div id="recurring-expense-list" class="item-list"></div>
+                <button class="btn btn-sm" onclick="app.openRecurringModal('expense')"><i class="fas fa-plus"></i> Add Expense</button>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Cash Flow Forecast</h3>
+                    <div class="forecast-controls">
+                        <button class="btn btn-sm active" data-months="3" onclick="app.setCashFlowForecast(3, this)">3 Months</button>
+                        <button class="btn btn-sm" data-months="6" onclick="app.setCashFlowForecast(6, this)">6 Months</button>
+                        <button class="btn btn-sm" data-months="12" onclick="app.setCashFlowForecast(12, this)">12 Months</button>
+                        <button class="btn btn-sm" data-months="24" onclick="app.setCashFlowForecast(24, this)">24 Months</button>
+                    </div>
+                    <canvas id="chart-cashflow-forecast"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Expense Breakdown</h3>
+                    <canvas id="chart-expense-breakdown"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Income Sources</h3>
+                    <canvas id="chart-income-sources"></canvas>
+                </div>
+            </div>
+
+            <div class="tips-panel" id="cashflow-tips">
+                <h3><i class="fas fa-lightbulb"></i> Cash Flow Tips</h3>
+                <div id="cashflow-tips-list">
+                    <p class="muted">Add your income and expense data to get tips.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ASSETS SECTION -->
+        <section id="section-assets" class="section">
+            <div class="section-header">
+                <h1>Asset Monitor</h1>
+            </div>
+
+            <div class="asset-grid" id="asset-cards-container">
+                <!-- Paris Flat -->
+                <div class="asset-card" data-asset="paris">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-city"></i>
+                        <h3>Paris Flat</h3>
+                        <span class="asset-tag">Rental Income + Mortgage</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Current Value</span>
+                            <strong id="paris-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Mortgage Outstanding</span>
+                            <strong id="paris-mortgage">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Equity</span>
+                            <strong id="paris-equity">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Monthly Rent</span>
+                            <strong id="paris-rent">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Monthly Mortgage Payment</span>
+                            <strong id="paris-mortgage-payment">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Net Monthly Income</span>
+                            <strong id="paris-net-income">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('paris')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- Manarat Flat -->
+                <div class="asset-card" data-asset="manarat">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                        <i class="fas fa-building"></i>
+                        <h3>Manarat Flat</h3>
+                        <span class="asset-tag">Off-Plan &bull; Delivery Sep 2026</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Purchase Price</span>
+                            <strong id="manarat-price">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Value Estimate</span>
+                            <strong id="manarat-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Amount Paid</span>
+                            <strong id="manarat-paid">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Amount Remaining</span>
+                            <strong id="manarat-remaining">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Delivery Date</span>
+                            <strong>September 2026</strong>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-label">Payment Progress</div>
+                            <div class="progress-bar"><div class="progress-fill" id="manarat-progress"></div></div>
+                            <span class="progress-pct" id="manarat-progress-pct">0%</span>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('manarat')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- Aegina House -->
+                <div class="asset-card" data-asset="aegina">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                        <i class="fas fa-home"></i>
+                        <h3>Aegina House</h3>
+                        <span class="asset-tag">Refurbishment &bull; Delivery Apr 2027</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Property Value</span>
+                            <strong id="aegina-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Budget</span>
+                            <strong id="aegina-budget">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Spent</span>
+                            <strong id="aegina-spent">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Refurb Remaining</span>
+                            <strong id="aegina-remaining">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('aegina')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+
+                <!-- SPY Shares -->
+                <div class="asset-card" data-asset="spy">
+                    <div class="asset-card-header" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>SPY Shares (HSBC)</h3>
+                        <span class="asset-tag">Investment</span>
+                    </div>
+                    <div class="asset-card-body">
+                        <div class="asset-stat">
+                            <span>Shares Held</span>
+                            <strong id="spy-shares">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Avg Cost Basis</span>
+                            <strong id="spy-cost">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Price</span>
+                            <strong id="spy-price">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Current Value</span>
+                            <strong id="spy-value">--</strong>
+                        </div>
+                        <div class="asset-stat">
+                            <span>Total Gain/Loss</span>
+                            <strong id="spy-gain">--</strong>
+                        </div>
+                        <button class="btn btn-sm" onclick="app.openAssetEditModal('spy')"><i class="fas fa-edit"></i> Update</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NET WORTH SECTION -->
+        <section id="section-networth" class="section">
+            <div class="section-header">
+                <h1>Net Worth Tracker</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card accent">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-gem"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Net Worth</span>
+                        <span class="kpi-value" id="nw-total">--</span>
+                        <span class="kpi-change" id="nw-change"></span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-plus-circle"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Assets</span>
+                        <span class="kpi-value" id="nw-assets">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fce4ec;color:#c62828;"><i class="fas fa-minus-circle"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Liabilities</span>
+                        <span class="kpi-value" id="nw-liabilities">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Net Worth History</h3>
+                    <canvas id="chart-networth-history"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Assets vs Liabilities</h3>
+                    <canvas id="chart-assets-liabilities"></canvas>
+                </div>
+            </div>
+
+            <!-- Net Worth Breakdown Table -->
+            <div class="panel">
+                <h3>Net Worth Breakdown</h3>
+                <table class="data-table" id="networth-table">
+                    <thead>
+                        <tr><th>Category</th><th>Item</th><th>Value</th><th>% of Net Worth</th></tr>
+                    </thead>
+                    <tbody id="networth-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CASH POSITIONS SECTION -->
+        <section id="section-cash" class="section">
+            <div class="section-header">
+                <h1>Cash Positions</h1>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card accent">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-money-bill-wave"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Cash</span>
+                        <span class="kpi-value" id="cash-total">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bank-accounts-grid" id="bank-accounts-container"></div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Cash Distribution</h3>
+                    <canvas id="chart-cash-distribution"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Cash Balance History</h3>
+                    <canvas id="chart-cash-history"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Manage Bank Accounts</h3>
+                <button class="btn" onclick="app.openBankAccountModal()"><i class="fas fa-plus"></i> Add / Update Bank Account</button>
+            </div>
+        </section>
+
+        <!-- BEHAVIOR SECTION -->
+        <section id="section-behavior" class="section">
+            <div class="section-header">
+                <h1>Financial Behavior Analysis</h1>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card wide">
+                    <h3>Monthly Spending Trend</h3>
+                    <canvas id="chart-spending-trend"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Spending by Category</h3>
+                    <canvas id="chart-spending-category"></canvas>
+                </div>
+            </div>
+
+            <!-- Behavior Alerts -->
+            <div class="panel" id="behavior-alerts-panel">
+                <h3><i class="fas fa-bell"></i> Behavior Alerts</h3>
+                <div id="behavior-alerts">
+                    <p class="muted">Add monthly spending data to receive behavior alerts and coaching.</p>
+                </div>
+            </div>
+
+            <!-- Monthly Comparison -->
+            <div class="panel">
+                <h3>Month-over-Month Comparison</h3>
+                <div id="month-comparison">
+                    <p class="muted">Need at least 2 months of data for comparison.</p>
+                </div>
+            </div>
+
+            <!-- Add Monthly Spending -->
+            <div class="panel">
+                <h3>Record Monthly Spending</h3>
+                <button class="btn" onclick="app.openSpendingModal()"><i class="fas fa-plus"></i> Add Monthly Spending Entry</button>
+            </div>
+        </section>
+
+        <!-- AEGINA SECTION -->
+        <section id="section-aegina" class="section">
+            <div class="section-header">
+                <h1>Aegina Property Refurbishment</h1>
+                <span class="delivery-date">Target Delivery: April 2027</span>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;color:#1565c0;"><i class="fas fa-euro-sign"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Budget</span>
+                        <span class="kpi-value" id="aegina-total-budget">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;color:#e65100;"><i class="fas fa-receipt"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Spent</span>
+                        <span class="kpi-value" id="aegina-total-spent">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;color:#2e7d32;"><i class="fas fa-calculator"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Remaining</span>
+                        <span class="kpi-value" id="aegina-total-remaining">--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#f3e5f5;color:#6a1b9a;"><i class="fas fa-percentage"></i></div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Budget Used</span>
+                        <span class="kpi-value" id="aegina-pct-used">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Progress -->
+            <div class="panel">
+                <h3>Overall Progress</h3>
+                <div class="progress-bar-container large">
+                    <div class="progress-bar"><div class="progress-fill" id="aegina-overall-progress" style="background: linear-gradient(90deg, #4facfe, #00f2fe);"></div></div>
+                    <span class="progress-pct" id="aegina-overall-pct">0%</span>
+                </div>
+                <div class="timeline-bar" id="aegina-timeline">
+                    <div class="timeline-marker start">Start</div>
+                    <div class="timeline-current" id="aegina-timeline-current"></div>
+                    <div class="timeline-marker end">Apr 2027</div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>Budget vs Spent by Category</h3>
+                    <canvas id="chart-aegina-categories"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Spending Over Time</h3>
+                    <canvas id="chart-aegina-timeline"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="panel">
+                <h3>Category Breakdown</h3>
+                <table class="data-table" id="aegina-category-table">
+                    <thead>
+                        <tr><th>Category</th><th>Budget</th><th>Spent</th><th>Remaining</th><th>Progress</th></tr>
+                    </thead>
+                    <tbody id="aegina-category-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Expense Log -->
+            <div class="panel">
+                <h3>Expense Log</h3>
+                <div id="aegina-expense-log" class="item-list"></div>
+                <button class="btn" onclick="app.openAeginaExpenseModal()"><i class="fas fa-plus"></i> Add Expense</button>
+                <button class="btn btn-secondary" onclick="app.openAeginaCategoryModal()"><i class="fas fa-layer-group"></i> Manage Categories</button>
+            </div>
+        </section>
+
+        <!-- UPDATE DATA SECTION -->
+        <section id="section-update" class="section">
+            <div class="section-header">
+                <h1>Update Your Data</h1>
+                <p class="section-subtitle">Keep your dashboard current by entering your latest financial data.</p>
+            </div>
+
+            <!-- Quick Update Wizard -->
+            <div class="update-wizard">
+                <h3><i class="fas fa-magic"></i> Quick Update Wizard</h3>
+                <p>Answer these questions to bring your dashboard up to date:</p>
+
+                <div class="wizard-step" id="wizard-step-1">
+                    <div class="wizard-step-header">
+                        <span class="step-number">1</span>
+                        <h4>Bank Account Balances</h4>
+                    </div>
+                    <div class="wizard-step-body" id="wizard-bank-inputs"></div>
+                </div>
+
+                <div class="wizard-step" id="wizard-step-2">
+                    <div class="wizard-step-header">
+                        <span class="step-number">2</span>
+                        <h4>SPY Investment</h4>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-group">
+                            <label>Number of SPY Shares</label>
+                            <input type="number" id="wizard-spy-shares" step="0.01" placeholder="e.g. 50">
+                        </div>
+                        <div class="form-group">
+                            <label>Current SPY Price ($)</label>
+                            <input type="number" id="wizard-spy-price" step="0.01" placeholder="e.g. 520.50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-step" id="wizard-step-3">
+                    <div class="wizard-step-header">
+                        <span class="step-number">3</span>
+                        <h4>This Month's Spending</h4>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Housing</label>
+                                <input type="number" id="wizard-spend-housing" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Food & Dining</label>
+                                <input type="number" id="wizard-spend-food" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Transport</label>
+                                <input type="number" id="wizard-spend-transport" step="0.01" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Utilities</label>
+                                <input type="number" id="wizard-spend-utilities" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Entertainment</label>
+                                <input type="number" id="wizard-spend-entertainment" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Other</label>
+                                <input type="number" id="wizard-spend-other" step="0.01" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-lg" onclick="app.submitWizard()"><i class="fas fa-save"></i> Save All Updates</button>
+            </div>
+
+            <!-- File Upload -->
+            <div class="panel">
+                <h3><i class="fas fa-file-upload"></i> Upload Bank Statement (CSV)</h3>
+                <p>Upload a CSV bank statement to auto-categorize transactions and update spending data.</p>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop a CSV file here, or click to browse</p>
+                    <input type="file" id="file-upload" accept=".csv" style="display:none">
+                </div>
+                <div id="upload-preview" class="upload-preview hidden"></div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="panel">
+                <h3><i class="fas fa-database"></i> Data Management</h3>
+                <div class="btn-group">
+                    <button class="btn" onclick="app.exportData()"><i class="fas fa-download"></i> Export All Data (JSON)</button>
+                    <button class="btn" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Import Data (JSON)</button>
+                    <input type="file" id="import-file" accept=".json" style="display:none" onchange="app.importData(event)">
+                    <button class="btn btn-danger" onclick="app.resetData()"><i class="fas fa-trash"></i> Reset All Data</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal</h3>
+                <button class="modal-close" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
