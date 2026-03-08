@@ -514,7 +514,25 @@ body {
     flex-shrink: 0;
 }
 .wizard-step-header h4 { font-size: 0.95rem; }
+.wizard-step-header { cursor: pointer; user-select: none; }
+.wizard-step-header .step-toggle { margin-left: auto; color: #999; transition: transform 0.2s; }
+.wizard-step.collapsed .wizard-step-body { display: none; }
+.wizard-step.collapsed .step-toggle { transform: rotate(-90deg); }
 .wizard-step-body { padding: 16px; }
+.form-section-label { font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; font-weight: 600; }
+.form-section-label:first-child { margin-top: 0; }
+.recurring-list-edit { margin-bottom: 12px; }
+.recurring-list-edit .rec-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8f9ff; border-radius: 8px; margin-bottom: 6px; }
+.recurring-list-edit .rec-item span { flex: 1; font-size: 0.9rem; }
+.recurring-list-edit .rec-item .rec-amount { font-weight: 600; color: #333; }
+.recurring-list-edit .rec-item button { background: none; border: none; color: #999; cursor: pointer; font-size: 0.85rem; padding: 4px 8px; border-radius: 4px; }
+.recurring-list-edit .rec-item button:hover { background: #fee; color: #e53935; }
+.add-rec-row { display: flex; gap: 8px; align-items: flex-end; }
+.add-rec-row .form-group { margin-bottom: 0; flex: 1; }
+.add-rec-row .form-group:first-child { flex: 2; }
+.add-rec-row button { height: 40px; white-space: nowrap; flex-shrink: 0; }
+.wizard-save-bar { position: sticky; bottom: 0; background: #fff; padding: 16px 0; border-top: 1px solid #eee; margin-top: 8px; text-align: center; z-index: 5; }
+.wizard-save-bar .btn { min-width: 250px; }
 
 /* ===== BEHAVIOR ALERTS ===== */
 .alert-item {
@@ -1082,45 +1100,226 @@ body {
         <section id="section-update" class="section">
             <div class="section-header">
                 <h1>Update Your Data</h1>
-                <p class="section-subtitle">Keep your dashboard current by entering your latest financial data.</p>
+                <p class="section-subtitle">Keep your dashboard current by entering your latest financial data. Fill in any sections you want to update.</p>
             </div>
 
-            <!-- Quick Update Wizard -->
+            <!-- Comprehensive Update Form -->
             <div class="update-wizard">
-                <h3><i class="fas fa-magic"></i> Quick Update Wizard</h3>
-                <p>Answer these questions to bring your dashboard up to date:</p>
+                <h3><i class="fas fa-edit"></i> Full Data Entry Form</h3>
+                <p>Update any or all sections below, then hit Save at the bottom.</p>
 
+                <!-- Step 1: Bank Accounts -->
                 <div class="wizard-step" id="wizard-step-1">
-                    <div class="wizard-step-header">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(1)">
                         <span class="step-number">1</span>
-                        <h4>Bank Account Balances</h4>
+                        <h4><i class="fas fa-university"></i> Bank Accounts</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
                     </div>
                     <div class="wizard-step-body" id="wizard-bank-inputs"></div>
                 </div>
 
+                <!-- Step 2: Paris Apartment -->
                 <div class="wizard-step" id="wizard-step-2">
-                    <div class="wizard-step-header">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(2)">
                         <span class="step-number">2</span>
-                        <h4>SPY Investment</h4>
+                        <h4><i class="fas fa-home"></i> Paris Apartment</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
                     </div>
                     <div class="wizard-step-body">
-                        <div class="form-group">
-                            <label>Number of SPY Shares</label>
-                            <input type="number" id="wizard-spy-shares" step="0.01" placeholder="e.g. 50">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Property Value (EUR)</label>
+                                <input type="number" id="wizard-paris-value" step="1" placeholder="e.g. 350000">
+                            </div>
+                            <div class="form-group">
+                                <label>Mortgage Outstanding (EUR)</label>
+                                <input type="number" id="wizard-paris-mortgage" step="1" placeholder="e.g. 200000">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Current SPY Price ($)</label>
-                            <input type="number" id="wizard-spy-price" step="0.01" placeholder="e.g. 520.50">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Monthly Rent Income (EUR)</label>
+                                <input type="number" id="wizard-paris-rent" step="1" placeholder="e.g. 1200">
+                            </div>
+                            <div class="form-group">
+                                <label>Monthly Mortgage Payment (EUR)</label>
+                                <input type="number" id="wizard-paris-mpayment" step="1" placeholder="e.g. 900">
+                            </div>
+                        </div>
+                        <div class="form-group" style="max-width:200px">
+                            <label>Mortgage Rate (%)</label>
+                            <input type="number" id="wizard-paris-rate" step="0.01" placeholder="e.g. 2.5">
                         </div>
                     </div>
                 </div>
 
+                <!-- Step 3: Manarat Property -->
                 <div class="wizard-step" id="wizard-step-3">
-                    <div class="wizard-step-header">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(3)">
                         <span class="step-number">3</span>
-                        <h4>This Month's Spending</h4>
+                        <h4><i class="fas fa-building"></i> Manarat Property</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
                     </div>
                     <div class="wizard-step-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Purchase Price</label>
+                                <input type="number" id="wizard-manarat-price" step="1" placeholder="e.g. 1500000">
+                            </div>
+                            <div class="form-group">
+                                <label>Current Value Estimate</label>
+                                <input type="number" id="wizard-manarat-curval" step="1" placeholder="e.g. 1600000">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Amount Paid So Far</label>
+                                <input type="number" id="wizard-manarat-paid" step="1" placeholder="e.g. 500000">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency</label>
+                                <select id="wizard-manarat-currency">
+                                    <option value="AED">AED</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="max-width:200px">
+                            <label>Delivery Date</label>
+                            <input type="month" id="wizard-manarat-delivery" placeholder="YYYY-MM">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Aegina Property -->
+                <div class="wizard-step" id="wizard-step-4">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(4)">
+                        <span class="step-number">4</span>
+                        <h4><i class="fas fa-hammer"></i> Aegina Property</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Property Value (EUR)</label>
+                                <input type="number" id="wizard-aegina-propval" step="1" placeholder="e.g. 150000">
+                            </div>
+                            <div class="form-group">
+                                <label>Refurbishment Budget (EUR)</label>
+                                <input type="number" id="wizard-aegina-budget" step="1" placeholder="e.g. 80000">
+                            </div>
+                        </div>
+                        <div class="form-group" style="max-width:200px">
+                            <label>Delivery Date</label>
+                            <input type="month" id="wizard-aegina-delivery" placeholder="YYYY-MM">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: SPY Investment -->
+                <div class="wizard-step" id="wizard-step-5">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(5)">
+                        <span class="step-number">5</span>
+                        <h4><i class="fas fa-chart-line"></i> SPY Investment</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Number of Shares</label>
+                                <input type="number" id="wizard-spy-shares" step="0.01" placeholder="e.g. 50">
+                            </div>
+                            <div class="form-group">
+                                <label>Avg Cost Basis ($/share)</label>
+                                <input type="number" id="wizard-spy-cost" step="0.01" placeholder="e.g. 480.00">
+                            </div>
+                            <div class="form-group">
+                                <label>Current Price ($/share)</label>
+                                <input type="number" id="wizard-spy-price" step="0.01" placeholder="e.g. 520.50">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Recurring Income -->
+                <div class="wizard-step" id="wizard-step-6">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(6)">
+                        <span class="step-number">6</span>
+                        <h4><i class="fas fa-arrow-down" style="color:#2e7d32"></i> Recurring Income</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="recurring-list-edit" id="wizard-income-list"></div>
+                        <div class="form-section-label">Add New Income Source</div>
+                        <div class="add-rec-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="wizard-income-name" placeholder="e.g. Salary, Freelance">
+                            </div>
+                            <div class="form-group">
+                                <label>Monthly Amount</label>
+                                <input type="number" id="wizard-income-amount" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency</label>
+                                <select id="wizard-income-currency">
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="AED">AED</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-sm" onclick="app.addWizardRecurring('income')"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 7: Recurring Expenses -->
+                <div class="wizard-step" id="wizard-step-7">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(7)">
+                        <span class="step-number">7</span>
+                        <h4><i class="fas fa-arrow-up" style="color:#c62828"></i> Recurring Expenses</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="recurring-list-edit" id="wizard-expense-list"></div>
+                        <div class="form-section-label">Add New Expense</div>
+                        <div class="add-rec-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="wizard-expense-name" placeholder="e.g. Rent, Insurance">
+                            </div>
+                            <div class="form-group">
+                                <label>Monthly Amount</label>
+                                <input type="number" id="wizard-expense-amount" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency</label>
+                                <select id="wizard-expense-currency">
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="AED">AED</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-sm" onclick="app.addWizardRecurring('expense')"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 8: Monthly Spending -->
+                <div class="wizard-step" id="wizard-step-8">
+                    <div class="wizard-step-header" onclick="app.toggleWizardStep(8)">
+                        <span class="step-number">8</span>
+                        <h4><i class="fas fa-receipt"></i> Monthly Spending</h4>
+                        <i class="fas fa-chevron-down step-toggle"></i>
+                    </div>
+                    <div class="wizard-step-body">
+                        <div class="form-group" style="max-width:200px">
+                            <label>Month</label>
+                            <input type="month" id="wizard-spend-month">
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Housing</label>
@@ -1145,14 +1344,27 @@ body {
                                 <input type="number" id="wizard-spend-entertainment" step="0.01" placeholder="0">
                             </div>
                             <div class="form-group">
+                                <label>Health</label>
+                                <input type="number" id="wizard-spend-health" step="0.01" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Shopping</label>
+                                <input type="number" id="wizard-spend-shopping" step="0.01" placeholder="0">
+                            </div>
+                            <div class="form-group">
                                 <label>Other</label>
                                 <input type="number" id="wizard-spend-other" step="0.01" placeholder="0">
                             </div>
+                            <div class="form-group"></div>
                         </div>
                     </div>
                 </div>
 
-                <button class="btn btn-primary btn-lg" onclick="app.submitWizard()"><i class="fas fa-save"></i> Save All Updates</button>
+                <div class="wizard-save-bar">
+                    <button class="btn btn-primary btn-lg" onclick="app.submitWizard()"><i class="fas fa-save"></i> Save All Updates</button>
+                </div>
             </div>
 
             <!-- File Upload -->
@@ -1986,39 +2198,209 @@ const app = {
     },
 
     // ===== UPDATE WIZARD =====
+    toggleWizardStep(n) {
+        document.getElementById('wizard-step-' + n).classList.toggle('collapsed');
+    },
+
     renderUpdateWizard() {
-        const container = document.getElementById('wizard-bank-inputs');
-        container.innerHTML = this.data.bankAccounts.map(acc => `
-            <div class="form-group">
-                <label>${acc.name} (${acc.currency})</label>
-                <input type="number" id="wizard-bank-${acc.id}" step="0.01" placeholder="Current balance" value="${acc.balance || ''}">
+        const d = this.data;
+
+        // Step 1: Bank accounts
+        const bankContainer = document.getElementById('wizard-bank-inputs');
+        bankContainer.innerHTML = d.bankAccounts.map((acc, i) => `
+            <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:10px">
+                <div class="form-row">
+                    <div class="form-group" style="flex:2">
+                        <label>Account Name</label>
+                        <input type="text" id="wizard-bank-name-${acc.id}" value="${acc.name}">
+                    </div>
+                    <div class="form-group">
+                        <label>Balance</label>
+                        <input type="number" id="wizard-bank-${acc.id}" step="0.01" placeholder="Current balance" value="${acc.balance || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="wizard-bank-cur-${acc.id}">
+                            <option value="EUR" ${acc.currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                            <option value="USD" ${acc.currency === 'USD' ? 'selected' : ''}>USD</option>
+                            <option value="GBP" ${acc.currency === 'GBP' ? 'selected' : ''}>GBP</option>
+                            <option value="AED" ${acc.currency === 'AED' ? 'selected' : ''}>AED</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Step 2: Paris
+        const p = d.assets.paris;
+        document.getElementById('wizard-paris-value').value = p.value || '';
+        document.getElementById('wizard-paris-mortgage').value = p.mortgage || '';
+        document.getElementById('wizard-paris-rent').value = p.monthlyRent || '';
+        document.getElementById('wizard-paris-mpayment').value = p.mortgagePayment || '';
+        document.getElementById('wizard-paris-rate').value = p.mortgageRate || '';
+
+        // Step 3: Manarat
+        const m = d.assets.manarat;
+        document.getElementById('wizard-manarat-price').value = m.purchasePrice || '';
+        document.getElementById('wizard-manarat-curval').value = m.currentValue || '';
+        document.getElementById('wizard-manarat-paid').value = m.amountPaid || '';
+        document.getElementById('wizard-manarat-currency').value = m.currency || 'AED';
+        document.getElementById('wizard-manarat-delivery').value = m.deliveryDate || '';
+
+        // Step 4: Aegina
+        const ae = d.assets.aegina;
+        document.getElementById('wizard-aegina-propval').value = ae.propertyValue || '';
+        document.getElementById('wizard-aegina-budget').value = ae.refurbBudget || '';
+        document.getElementById('wizard-aegina-delivery').value = ae.deliveryDate || '';
+
+        // Step 5: SPY
+        const sp = d.assets.spy;
+        document.getElementById('wizard-spy-shares').value = sp.shares || '';
+        document.getElementById('wizard-spy-cost').value = sp.costBasis || '';
+        document.getElementById('wizard-spy-price').value = sp.currentPrice || '';
+
+        // Step 6 & 7: Recurring income & expenses
+        this.renderWizardRecurringList('income');
+        this.renderWizardRecurringList('expense');
+
+        // Step 8: Monthly spending - prefill with current month data
+        const month = currentMonth();
+        document.getElementById('wizard-spend-month').value = month;
+        const existing = d.monthlySpending.find(ms => ms.month === month);
+        const cats = existing ? existing.categories : {};
+        ['housing', 'food', 'transport', 'utilities', 'entertainment', 'health', 'shopping', 'other'].forEach(cat => {
+            document.getElementById('wizard-spend-' + cat).value = cats[cat] || '';
+        });
+    },
+
+    renderWizardRecurringList(type) {
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+        const container = document.getElementById('wizard-' + type + '-list');
+        if (list.length === 0) {
+            container.innerHTML = '<p style="color:#999;font-size:0.85rem;margin-bottom:8px">No recurring ' + type + ' entries yet.</p>';
+            return;
+        }
+        container.innerHTML = list.map((item, i) => `
+            <div class="rec-item">
+                <span>${item.name}</span>
+                <span class="rec-amount">${fmt(item.amount, item.currency)}/mo</span>
+                <button onclick="app.editWizardRecurring('${type}', ${i})" title="Edit"><i class="fas fa-pen"></i></button>
+                <button onclick="app.deleteWizardRecurring('${type}', ${i})" title="Delete"><i class="fas fa-trash"></i></button>
             </div>
         `).join('');
     },
 
+    addWizardRecurring(type) {
+        const name = document.getElementById('wizard-' + type + '-name').value.trim();
+        const amount = parseFloat(document.getElementById('wizard-' + type + '-amount').value);
+        const currency = document.getElementById('wizard-' + type + '-currency').value;
+
+        if (!name || isNaN(amount) || amount <= 0) { alert('Please enter a name and valid amount.'); return; }
+
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+        list.push({ name, amount, currency });
+        this.save();
+        this.renderWizardRecurringList(type);
+
+        // Clear inputs
+        document.getElementById('wizard-' + type + '-name').value = '';
+        document.getElementById('wizard-' + type + '-amount').value = '';
+    },
+
+    editWizardRecurring(type, index) {
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+        const item = list[index];
+        document.getElementById('wizard-' + type + '-name').value = item.name;
+        document.getElementById('wizard-' + type + '-amount').value = item.amount;
+        document.getElementById('wizard-' + type + '-currency').value = item.currency || 'EUR';
+        // Remove old one; user will re-add via the Add button
+        list.splice(index, 1);
+        this.save();
+        this.renderWizardRecurringList(type);
+    },
+
+    deleteWizardRecurring(type, index) {
+        if (!confirm('Delete this entry?')) return;
+        const list = type === 'income' ? this.data.recurringIncome : this.data.recurringExpenses;
+        list.splice(index, 1);
+        this.save();
+        this.renderWizardRecurringList(type);
+    },
+
     submitWizard() {
         const d = this.data;
+        const today = new Date().toISOString().split('T')[0];
 
-        // Bank balances
+        // 1. Bank accounts
         d.bankAccounts.forEach(acc => {
-            const input = document.getElementById('wizard-bank-' + acc.id);
-            if (input && input.value) {
-                acc.balance = parseFloat(input.value);
-                acc.history.push({ date: new Date().toISOString().split('T')[0], balance: acc.balance });
+            const nameInput = document.getElementById('wizard-bank-name-' + acc.id);
+            const balInput = document.getElementById('wizard-bank-' + acc.id);
+            const curInput = document.getElementById('wizard-bank-cur-' + acc.id);
+            if (nameInput && nameInput.value.trim()) acc.name = nameInput.value.trim();
+            if (curInput) acc.currency = curInput.value;
+            if (balInput && balInput.value) {
+                acc.balance = parseFloat(balInput.value);
+                acc.history.push({ date: today, balance: acc.balance });
             }
         });
 
-        // SPY
+        // 2. Paris
+        const pv = document.getElementById('wizard-paris-value');
+        const pm = document.getElementById('wizard-paris-mortgage');
+        const pr = document.getElementById('wizard-paris-rent');
+        const pmp = document.getElementById('wizard-paris-mpayment');
+        const prate = document.getElementById('wizard-paris-rate');
+        if (pv.value) d.assets.paris.value = parseFloat(pv.value);
+        if (pm.value) d.assets.paris.mortgage = parseFloat(pm.value);
+        if (pr.value) d.assets.paris.monthlyRent = parseFloat(pr.value);
+        if (pmp.value) d.assets.paris.mortgagePayment = parseFloat(pmp.value);
+        if (prate.value) d.assets.paris.mortgageRate = parseFloat(prate.value);
+        if (pv.value || pm.value) {
+            d.assets.paris.history.push({ date: today, value: d.assets.paris.value, mortgage: d.assets.paris.mortgage });
+        }
+
+        // 3. Manarat
+        const mp = document.getElementById('wizard-manarat-price');
+        const mcv = document.getElementById('wizard-manarat-curval');
+        const mpd = document.getElementById('wizard-manarat-paid');
+        const mcur = document.getElementById('wizard-manarat-currency');
+        const mdel = document.getElementById('wizard-manarat-delivery');
+        if (mp.value) d.assets.manarat.purchasePrice = parseFloat(mp.value);
+        if (mcv.value) d.assets.manarat.currentValue = parseFloat(mcv.value);
+        if (mpd.value) d.assets.manarat.amountPaid = parseFloat(mpd.value);
+        if (mcur.value) d.assets.manarat.currency = mcur.value;
+        if (mdel.value) d.assets.manarat.deliveryDate = mdel.value;
+        if (mcv.value || mpd.value) {
+            d.assets.manarat.history.push({ date: today, value: d.assets.manarat.currentValue, paid: d.assets.manarat.amountPaid });
+        }
+
+        // 4. Aegina
+        const apv = document.getElementById('wizard-aegina-propval');
+        const ab = document.getElementById('wizard-aegina-budget');
+        const adel = document.getElementById('wizard-aegina-delivery');
+        if (apv.value) d.assets.aegina.propertyValue = parseFloat(apv.value);
+        if (ab.value) d.assets.aegina.refurbBudget = parseFloat(ab.value);
+        if (adel.value) d.assets.aegina.deliveryDate = adel.value;
+
+        // 5. SPY
         const spyShares = document.getElementById('wizard-spy-shares');
+        const spyCost = document.getElementById('wizard-spy-cost');
         const spyPrice = document.getElementById('wizard-spy-price');
         if (spyShares.value) d.assets.spy.shares = parseFloat(spyShares.value);
+        if (spyCost.value) d.assets.spy.costBasis = parseFloat(spyCost.value);
         if (spyPrice.value) d.assets.spy.currentPrice = parseFloat(spyPrice.value);
+        if (spyShares.value || spyPrice.value) {
+            d.assets.spy.history.push({ date: today, shares: d.assets.spy.shares, price: d.assets.spy.currentPrice });
+        }
 
-        // Monthly spending
-        const cats = ['housing', 'food', 'transport', 'utilities', 'entertainment', 'other'];
+        // 6 & 7: Recurring income/expenses already saved inline via add/delete
+
+        // 8. Monthly spending
+        const spendMonth = document.getElementById('wizard-spend-month').value || currentMonth();
+        const spendCats = ['housing', 'food', 'transport', 'utilities', 'entertainment', 'health', 'shopping', 'other'];
         const spending = {};
         let total = 0;
-        cats.forEach(cat => {
+        spendCats.forEach(cat => {
             const input = document.getElementById('wizard-spend-' + cat);
             const val = input && input.value ? parseFloat(input.value) : 0;
             if (val > 0) {
@@ -2028,27 +2410,24 @@ const app = {
         });
 
         if (total > 0) {
-            const month = currentMonth();
-            const existing = d.monthlySpending.findIndex(m => m.month === month);
-            if (existing >= 0) {
-                d.monthlySpending[existing] = { month, categories: spending, total };
+            const existIdx = d.monthlySpending.findIndex(m => m.month === spendMonth);
+            if (existIdx >= 0) {
+                d.monthlySpending[existIdx] = { month: spendMonth, categories: spending, total };
             } else {
-                d.monthlySpending.push({ month, categories: spending, total });
+                d.monthlySpending.push({ month: spendMonth, categories: spending, total });
             }
             d.monthlySpending.sort((a, b) => a.month.localeCompare(b.month));
         }
 
-        // Snapshot cash history
+        // Snapshots
         const totalCash = d.bankAccounts.reduce((s, a) => s + a.balance, 0);
-        d.cashHistory.push({ date: new Date().toISOString().split('T')[0], total: totalCash });
-
-        // Snapshot net worth
+        d.cashHistory.push({ date: today, total: totalCash });
         const nw = this.calculateNetWorthFromData(d);
-        d.networthHistory.push({ date: new Date().toISOString().split('T')[0], ...nw });
+        d.networthHistory.push({ date: today, ...nw });
 
         this.save();
         this.renderAll();
-        alert('Data updated successfully!');
+        alert('All data updated successfully!');
     },
 
     // ===== CALCULATIONS =====
